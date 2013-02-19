@@ -19,6 +19,7 @@
 #include <vtkXMLUnstructuredGridReader.h>
 
 #include "Mesh.hpp"
+#include "Q.hpp"
 
 Mesh::Mesh(const char *filename){
   // Check whether the provided file exists.
