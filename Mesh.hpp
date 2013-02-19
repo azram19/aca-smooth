@@ -58,6 +58,7 @@ public:
   double element_area(size_t eid) const;
   double element_quality(size_t eid) const;
   Quality get_mesh_quality() const;
+  Quality get_mesh_quality_parallel(int start, int end) const;
 
 private:
   void create_adjacency();

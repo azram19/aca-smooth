@@ -10,6 +10,7 @@
 #include <cmath>
 #include <set>
 #include <vector>
+#include <future>
 
 #include <vtkCell.h>
 #include <vtkCellData.h>
@@ -274,17 +275,46 @@ double Mesh::element_quality(size_t eid) const{
 Quality Mesh::get_mesh_quality() const{
   Quality q;
 
+  const int parallel_jobs = 4;
+  const double section = NElements/4;
+
+  auto parallel_job = [&](int start, int end) -> Quality {
+    return get_mesh_quality_parallel(start, end);
+  };
+
+  auto fut1 = std::async(std::launch::async, parallel_job, 0, (int)section);
+  auto fut2 = std::async(std::launch::async, parallel_job, (int)section, (int)NElements/2);
+  auto fut3 = std::async(std::launch::async, parallel_job, (int)NElements/2, (int)section*3);
+  auto fut4 = std::async(std::launch::async, parallel_job, (int)section*3, NElements);
+
+  auto q1 = fut1.get();
+  auto q2 = fut2.get();
+  auto q3 = fut3.get();
+  auto q4 = fut4.get();
+
+  q.mean = (q1.mean + q2.mean + q3.mean + q4.mean)/NElements;
+  
+  auto min1 = std::min(q1.min, q2.min);
+  auto min2 = std::min(q3.min, q4.min);
+  q.min = std::min(min1,min2);
+
+  return q;
+}
+
+Quality Mesh::get_mesh_quality_parallel(int start, int end) const{
+  Quality q;
+
   double mean_q = 0.0;
   double min_q = 1.0;
 
-  for(size_t i=0;i<NElements;i++){
+  for(size_t i=start;i<end;i++){
     double ele_q = element_quality(i);
 
     mean_q += ele_q;
     min_q = std::min(min_q, ele_q);
   }
 
-  q.mean = mean_q/NElements;
+  q.mean = mean_q;
   q.min = min_q;
 
   return q;
