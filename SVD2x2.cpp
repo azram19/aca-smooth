@@ -64,13 +64,13 @@ void calc_eigenvectors(const double A[4],
   if(D[1] != 0.0)
   {
     proportion = -(D[0]/D[1]);
-    eigenvectors[0] = sqrt(1.0 / (1 + proportion*proportion));
+    eigenvectors[0] = 1.0 / sqrt(1 + proportion*proportion);
     eigenvectors[2] = proportion * eigenvectors[0];
   }
   else if(D[3] != 0.0)
   {
     proportion = -(D[2]/D[3]);
-    eigenvectors[0] = sqrt(1.0 / (1 + proportion*proportion));
+    eigenvectors[0] = 1.0 / sqrt(1 + proportion*proportion);
     eigenvectors[2] = proportion * eigenvectors[0];
   }
   else if(D[0] == 0.0)
@@ -95,13 +95,13 @@ void calc_eigenvectors(const double A[4],
   if(D[1] != 0.0)
   {
     proportion = -(D[0]/D[1]);
-    eigenvectors[1] = sqrt(1.0 / (1 + proportion*proportion));
+    eigenvectors[1] = 1.0 / sqrt((1 + proportion*proportion));
     eigenvectors[3] = proportion * eigenvectors[1];
   }
   else if(D[3] != 0.0)
   {
     proportion = -(D[2]/D[3]);
-    eigenvectors[1] = sqrt(1.0 / (1 + proportion*proportion));
+    eigenvectors[1] = 1.0 / sqrt((1 + proportion*proportion));
     eigenvectors[3] = proportion * eigenvectors[1];
   }
   else if(D[0] == 0.0)

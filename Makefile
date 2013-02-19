@@ -7,7 +7,6 @@ LIBS = -L./vtk/lib/vtk-5.10 -lvtkIO -lvtkFiltering -lvtkCommon -lvtkzlib -lvtkex
 TARGET = ACA2-2013
 
 $(TARGET):	$(OBJS)
-	@$(CXX) -S $(TARGET) $(OBJS) $(LIBS)
 	@$(CXX) -o $(TARGET) $(OBJS) $(LIBS)
 
 all:	@$(TARGET)

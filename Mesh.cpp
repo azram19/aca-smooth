@@ -235,13 +235,23 @@ double Mesh::element_quality(size_t eid) const{
   double m11 = (m0[2] + m1[2] + m2[2])/3;
 
   // l is the length of the perimeter, measured in metric space
+  
+  double c0010 = c0[0] - c1[0];
+  double c0111 = c0[1] - c1[1];
+  
+  double c0020 = c0[0] - c2[0];
+  double c0121 = c0[1] - c2[1];
+
+  double c2010 = c2[0] - c1[0];
+  double c2111 = c2[1] - c1[1];
+
   double l =
-    sqrt((c0[1] - c1[1])*((c0[1] - c1[1])*m11 + (c0[0] - c1[0])*m01) +
-         (c0[0] - c1[0])*((c0[1] - c1[1])*m01 + (c0[0] - c1[0])*m00))+
-    sqrt((c0[1] - c2[1])*((c0[1] - c2[1])*m11 + (c0[0] - c2[0])*m01) +
-         (c0[0] - c2[0])*((c0[1] - c2[1])*m01 + (c0[0] - c2[0])*m00))+
-    sqrt((c2[1] - c1[1])*((c2[1] - c1[1])*m11 + (c2[0] - c1[0])*m01) +
-         (c2[0] - c1[0])*((c2[1] - c1[1])*m01 + (c2[0] - c1[0])*m00));
+    sqrt(c0111*(c0111*m11 + c0010*m01) +
+         c0010*(c0111*m01 + c0010*m00))+
+    sqrt(c0121*(c0121*m11 + c0020*m01) +
+         c0020*(c0121*m01 + c0020*m00))+
+    sqrt(c2111*(c2111*m11 + c2010*m01) +
+         c2010*(c2111*m01 + c2010*m00));
 
   // Area in physical space
   double a = element_area(eid);
