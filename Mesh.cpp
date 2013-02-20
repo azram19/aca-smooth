@@ -20,7 +20,6 @@
 #include <vtkXMLUnstructuredGridReader.h>
 
 #include "Mesh.hpp"
-#include "Q.hpp"
 
 Mesh::Mesh(const char *filename){
   // Check whether the provided file exists.
@@ -226,43 +225,43 @@ double Mesh::element_quality(size_t eid) const{
   const double *c2 = &coords[2*n[2]];
 
   // Pointers to the metric tensor at each vertex
-  const double *m0 = &metric[3*n[0]];
-  const double *m1 = &metric[3*n[1]];
-  const double *m2 = &metric[3*n[2]];
+  const double *m0 = &metric[3*n[0]]; //const
+  const double *m1 = &metric[3*n[1]]; //const
+  const double *m2 = &metric[3*n[2]]; //const
 
   // Metric tensor averaged over the element
-  double m00 = (m0[0] + m1[0] + m2[0])/3;
-  double m01 = (m0[1] + m1[1] + m2[1])/3;
-  double m11 = (m0[2] + m1[2] + m2[2])/3;
+  const double m00 = (m0[0] + m1[0] + m2[0])/3; //const
+  const double m01 = (m0[1] + m1[1] + m2[1])/3; //const
+  const double m11 = (m0[2] + m1[2] + m2[2])/3; //const
 
   // l is the length of the perimeter, measured in metric space
   
-  double c0010 = c0[0] - c1[0];
-  double c0111 = c0[1] - c1[1];
+  const double c0010 = c0[0] - c1[0];
+  const double c0111 = c0[1] - c1[1];
   
-  double c0020 = c0[0] - c2[0];
-  double c0121 = c0[1] - c2[1];
+  const double c0020 = c0[0] - c2[0];
+  const double c0121 = c0[1] - c2[1];
 
-  double c2010 = c2[0] - c1[0];
-  double c2111 = c2[1] - c1[1];
+  const double c2010 = c2[0] - c1[0];
+  const double c2111 = c2[1] - c1[1];
 
-  double l =
-    sqrt(c0111*(c0111*m11 + c0010*m01) +
-         c0010*(c0111*m01 + c0010*m00))+
-    sqrt(c0121*(c0121*m11 + c0020*m01) +
-         c0020*(c0121*m01 + c0020*m00))+
-    sqrt(c2111*(c2111*m11 + c2010*m01) +
-         c2010*(c2111*m01 + c2010*m00));
+  const double l =
+    sqrt(c0111*(c0111*m11 + 2*c0010*m01) +
+         c0010*c0010*m00)+
+    sqrt(c0121*(c0121*m11 + 2*c0020*m01) +
+         c0020*c0020*m00)+
+    sqrt(c2111*(c2111*m11 + 2*c2010*m01) +
+         c2010*c2010*m00);
 
   // Area in physical space
-  double a = element_area(eid);
+  const double a = element_area(eid);
 
   // Area in metric space
-  double a_m = a*sqrt(m00*m11 - m01*m01);
+  const double a_m = a * sqrt(m00*m11 - m01*m01); //const
 
   // Function
-  double f = std::min(l/3.0, 3.0/l);
-  double F = pow(f * (2.0 - f), 3.0);
+  const double f = std::min(l/3.0, 3.0/l);
+  const double F = pow(f * (2.0 - f), 3.0);
 
   // This is the 2D Lipnikov functional.
   double quality = 12.0 * sqrt(3.0) * a_m * F / (l*l);

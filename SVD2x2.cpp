@@ -5,9 +5,11 @@
 //============================================================================
 
 #include <math.h>
+#include <map>
+#include <vector>
+#include <cstdio>
 
 #include "SVD2x2.hpp"
-#include "Q.hpp"
 
 /*
  * Calculates the eigenvalues of a 2x2 matrix A
@@ -116,10 +118,26 @@ void calc_eigenvectors(const double A[4],
   }
 }
 
+double ** svd2x2cache;
+int cachedVid;
 /*
  * Solves the 2D linear system Ap=q using SVD
  */
-void svd_solve_2x2(const double A[4], double p[2], const double q[2]){
+void svd_init(int nelements){
+  svd2x2cache = new double*[nelements];
+  cachedVid = -1;
+}
+
+void svd_teardown(int nelements){
+  for(int i = 0; i < nelements; i++){
+    delete svd2x2cache[i];
+  }
+
+  delete svd2x2cache;
+  cachedVid = -1;
+}
+
+void svd_solve_2x2(int vid, const double A[4], double p[2], const double q[2]){
   /*
    * If A is decomposed as A = U * Σ * Vtransp, where:
    *
@@ -136,11 +154,17 @@ void svd_solve_2x2(const double A[4], double p[2], const double q[2]){
    * Σinv: the inverse of Σ,
    * Utransp: the transpose of U
    */
+  if( vid <= cachedVid ){
+    auto V = svd2x2cache[vid];
+    p[0] = V[0]*q[0] + V[1]*q[1];
+    p[1] = V[2]*q[0] + V[3]*q[1];
+    return;
+  }
 
-  double AAT[4]; // This will be used to store either A*Atransp or Atransp*A
-  double eigenvalues[2];
-  double U[4];
-  double V[4];
+  double AAT[4]; // This will be used to store either A*Atransp or Atransp*A //const
+  double eigenvalues[2]; //const
+  double U[4]; //const
+  double V[4]; //const
 
   // Caclulate Atransp*A
   AAT[0] = A[0]*A[0] + A[2]*A[2];
@@ -149,10 +173,10 @@ void svd_solve_2x2(const double A[4], double p[2], const double q[2]){
   AAT[3] = A[1]*A[1] + A[3]*A[3];
 
   // Calculate the eigenvalues of AT*A
-  calc_eigenvalues(AAT, eigenvalues);
+  calc_eigenvalues(AAT, eigenvalues); //const
 
   // Calculate the right singular vector V:
-  calc_eigenvectors(AAT, eigenvalues, V);
+  calc_eigenvectors(AAT, eigenvalues, V); //const
 
   /*
    * Using these eigenvalues, with λ0 > λ1, the diagonal matrix Σ is:
@@ -220,6 +244,10 @@ void svd_solve_2x2(const double A[4], double p[2], const double q[2]){
    *
    * p = V * q
    */
+  double * cacheV = new double[4] { V[0], V[1], V[2], V[3] };
+  svd2x2cache[vid] = cacheV;
+  cachedVid = vid;
+
   p[0] = V[0]*q[0] + V[1]*q[1];
   p[1] = V[2]*q[0] + V[3]*q[1];
 }
