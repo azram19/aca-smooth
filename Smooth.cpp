@@ -11,34 +11,50 @@
 #include "SVD2x2.hpp"
 #include "Smooth.hpp"
 
-bool * vertices_in_neighberhood; //vertices in the neighberhood
+std::vector<bool> vertices_in_neighberhood; //vertices in the neighberhood
+
+std::vector<std::vector<int> > slices;
 
 std::list<int> to_examine_all; //all vertices to be examined
 std::list<int> to_examine_now; //vertices to be examined by a population of threads
 
 void populate_vertices(Mesh *mesh){
   //put all vertices from the mesh into `to_examine_all`
+  for(int i = 0; i < mesh->NNodes; i++){
+    to_examine_all.push_back(i);
+    vertices_in_neighberhood.push_back(false);
+  }
 }
 
-void select_vertices(Mesh *mesh){
-  //iterate through vertices in 'to_examine_all'
-  for (int &v : to_examine_all) {
+//effectively greedy colouring
+void select_vertices(Mesh *mesh, int colour){
+  //reset neighberhoods
+  for (std::list<int>::const_iterator it=to_examine_all.begin(); it!=to_examine_all.end(); ++it) {
+    vertices_in_neighberhood[*it] = false;
+  }
+
+  for(std::list<int>::const_iterator it=to_examine_all.begin(); it!=to_examine_all.end(); ++it){
     //if a vertex is not in the neighberhood
-    if( !vertices_in_neighberhood[v] ){
+    if( !vertices_in_neighberhood[*it] ){
       //add to the 'to_examine_now'
-      to_examine_now.push_back(v);
+      to_examine_now.push_back(*it);
+      //add to a slice
+      slices[colour].push_back(*it);
       //put in the neighberhood
-      vertices_in_neighberhood[v] = true;
+      vertices_in_neighberhood[*it] = true;
       //iterate over adjacent vertices and put them in the neighberhood
-      for( auto &va : mesh->NNList[v] ){
-        vertices_in_neighberhood[va] = true;        
+      for(std::vector<size_t>::const_iterator nit=mesh->NNList[*it].begin(); nit!=mesh->NNList[*it].end(); ++nit){
+        vertices_in_neighberhood[*nit] = true;        
       }
     }
   }
 }
 
-void remove_vertices(){
+void remove_vertices(Mesh* mesh){
   //remove items in `to_examine_now` from `to_examine_all`
+  for( std::list<int>::const_iterator it=to_examine_now.begin(); it!=to_examine_now.end(); ++it ){
+    to_examine_all.remove(*it);
+  }
 }
 
 void spawn_threads(){
@@ -51,16 +67,26 @@ void smooth_job(){
 }
 
 void smooth_parallel(Mesh* mesh, int iter){
+  printf("colouring...");
   populate_vertices( mesh );
-  
-  while( to_examine_all.size() > 0){
-    select_vertices();
-    remove_vertices();
-    spawn_threads();
+
+  int colour = 0;
+  while( ! to_examine_all.empty()){
+    std::vector<int> v;
+    slices.push_back(v);
+
+    select_vertices( mesh, colour );
+    remove_vertices( mesh );
+
+    colour++;
   }
+  printf("%d\n", colour);
 }
 
 void smooth(Mesh* mesh, size_t niter){
+  //smooth_parallel(mesh, 0);
+  //return;
+
   svd_init( mesh->NNodes );
 
   double * quality_cache = new double[mesh->NElements];
