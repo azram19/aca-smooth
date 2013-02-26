@@ -6,9 +6,59 @@
 
 #include <algorithm>
 #include <cmath>
+#include <list>
 
 #include "SVD2x2.hpp"
 #include "Smooth.hpp"
+
+bool * vertices_in_neighberhood; //vertices in the neighberhood
+
+std::list<int> to_examine_all; //all vertices to be examined
+std::list<int> to_examine_now; //vertices to be examined by a population of threads
+
+void populate_vertices(Mesh *mesh){
+  //put all vertices from the mesh into `to_examine_all`
+}
+
+void select_vertices(Mesh *mesh){
+  //iterate through vertices in 'to_examine_all'
+  for (int &v : to_examine_all) {
+    //if a vertex is not in the neighberhood
+    if( !vertices_in_neighberhood[v] ){
+      //add to the 'to_examine_now'
+      to_examine_now.push_back(v);
+      //put in the neighberhood
+      vertices_in_neighberhood[v] = true;
+      //iterate over adjacent vertices and put them in the neighberhood
+      for( auto &va : mesh->NNList[v] ){
+        vertices_in_neighberhood[va] = true;        
+      }
+    }
+  }
+}
+
+void remove_vertices(){
+  //remove items in `to_examine_now` from `to_examine_all`
+}
+
+void spawn_threads(){
+  //for each element in to_examine_now spawn new smooth_job
+  //barrier
+}
+
+void smooth_job(){
+
+}
+
+void smooth_parallel(Mesh* mesh, int iter){
+  populate_vertices( mesh );
+  
+  while( to_examine_all.size() > 0){
+    select_vertices();
+    remove_vertices();
+    spawn_threads();
+  }
+}
 
 void smooth(Mesh* mesh, size_t niter){
   svd_init( mesh->NNodes );
