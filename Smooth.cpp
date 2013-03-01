@@ -64,8 +64,8 @@ void spawn_threads(Mesh * mesh, size_t colour, double * quality_cache, bool * ve
   //for each element in to_examine_now spawn new smooth_job
   std::for_each(slices[colour].begin(), slices[colour].end(), [&](int & v)
   {
-    auto f = std::async( smooth_job, mesh, v, quality_cache, vertice_in_cache );
-    futures.push_back(std::move(f));
+    auto f = std::async( std::launch::async, smooth_job, mesh, v, quality_cache, vertice_in_cache );
+    futures.push_back( std::move( f ) );
   });
 
   //barrier
