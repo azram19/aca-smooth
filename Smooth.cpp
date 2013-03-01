@@ -9,6 +9,7 @@
 #include <list>
 #include <stdio.h>
 #include <string.h>
+#include <future>
 
 #include "SVD2x2.hpp"
 #include "Smooth.hpp"
@@ -51,21 +52,35 @@ void select_vertices(Mesh *mesh, int colour){
   }
 }
 
-void spawn_threads(){
-  //for each element in to_examine_now spawn new smooth_job
-  //barrier
+
+//memory write access to - mesh->coords...
+void smooth_job(Mesh * mesh, size_t vertex, double * quality_cache, bool * vertice_in_cache){
+
 }
 
-void smooth_job(){
+void spawn_threads(Mesh * mesh, size_t colour, double * quality_cache, bool * vertice_in_cache){
+  std::vector<std::future<void> > futures;
 
+  //for each element in to_examine_now spawn new smooth_job
+  std::for_each(slices[colour].begin(), slices[colour].end(), [&](int & v)
+  {
+    auto f = std::async( smooth_job, mesh, v, quality_cache, vertice_in_cache );
+    futures.push_back(std::move(f));
+  });
+
+  //barrier
+  std::for_each(futures.begin(), futures.end(), [](std::future<void> & f)
+  {
+      f.wait();
+  });
 }
 
 void smooth_parallel(Mesh* mesh, int iter){
-  printf("colouring...");
-  populate_vertices( mesh );
-
+  //Colouring phase
   int colour = 0;
   vertices = mesh->NNodes; 
+  
+  populate_vertices( mesh );
 
   while( vertices > 0 ){
     std::vector<int> v;
@@ -76,10 +91,24 @@ void smooth_parallel(Mesh* mesh, int iter){
     colour++;
   }
 
-  printf("%d\n", colour);
-
   delete vertices_in_neighberhood;
   delete to_examine_all;
+
+  //Execution phase
+  svd_init( mesh->NNodes );
+
+  double * quality_cache = new double[mesh->NElements];
+  bool * vertice_in_cache = new bool[mesh->NElements];
+
+  //Only one iteration at the moment
+  for(size_t i = 0; i < colour; i++){
+    spawn_threads( mesh, i, quality_cache, vertice_in_cache );
+  }
+
+  svd_teardown( mesh->NNodes );
+  
+  delete quality_cache;
+  delete vertice_in_cache;
 }
 
 void smooth(Mesh* mesh, size_t niter){
