@@ -7,11 +7,13 @@
 #include <algorithm>
 #include <cmath>
 #include <list>
+#include <stdio.h>
+#include <string.h>
 
 #include "SVD2x2.hpp"
 #include "Smooth.hpp"
 
-std::vector<bool> vertices_in_neighberhood; //vertices in the neighberhood
+bool * vertices_in_neighberhood; //vertices in the neighberhood
 
 std::vector<std::vector<int> > slices;
 
@@ -22,16 +24,14 @@ void populate_vertices(Mesh *mesh){
   //put all vertices from the mesh into `to_examine_all`
   for(int i = 0; i < mesh->NNodes; i++){
     to_examine_all.push_back(i);
-    vertices_in_neighberhood.push_back(false);
   }
+  vertices_in_neighberhood = new bool[mesh->NNodes];
 }
 
 //effectively greedy colouring
 void select_vertices(Mesh *mesh, int colour){
   //reset neighberhoods
-  for (std::list<int>::const_iterator it=to_examine_all.begin(); it!=to_examine_all.end(); ++it) {
-    vertices_in_neighberhood[*it] = false;
-  }
+  memset(vertices_in_neighberhood, false, mesh->NNodes);
 
   for(std::list<int>::const_iterator it=to_examine_all.begin(); it!=to_examine_all.end(); ++it){
     //if a vertex is not in the neighberhood
@@ -44,7 +44,7 @@ void select_vertices(Mesh *mesh, int colour){
       vertices_in_neighberhood[*it] = true;
       //iterate over adjacent vertices and put them in the neighberhood
       for(std::vector<size_t>::const_iterator nit=mesh->NNList[*it].begin(); nit!=mesh->NNList[*it].end(); ++nit){
-        vertices_in_neighberhood[*nit] = true;        
+        vertices_in_neighberhood[*nit] = true;
       }
     }
   }
@@ -80,7 +80,10 @@ void smooth_parallel(Mesh* mesh, int iter){
 
     colour++;
   }
+
   printf("%d\n", colour);
+
+  delete vertices_in_neighberhood;
 }
 
 void smooth(Mesh* mesh, size_t niter){
