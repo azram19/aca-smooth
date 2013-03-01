@@ -14,46 +14,40 @@
 #include "Smooth.hpp"
 
 bool * vertices_in_neighberhood; //vertices in the neighberhood
+bool * to_examine_all; //vertices to be examined
+int vertices; //number of vertices left to examine
 
 std::vector<std::vector<int> > slices;
 
-std::list<int> to_examine_all; //all vertices to be examined
-std::list<int> to_examine_now; //vertices to be examined by a population of threads
-
 void populate_vertices(Mesh *mesh){
   //put all vertices from the mesh into `to_examine_all`
-  for(int i = 0; i < mesh->NNodes; i++){
-    to_examine_all.push_back(i);
-  }
+  to_examine_all = new bool[mesh->NNodes];
+  memset(to_examine_all, true, mesh->NNodes);
+
   vertices_in_neighberhood = new bool[mesh->NNodes];
 }
 
-//effectively greedy colouring
+//greedy colouring
 void select_vertices(Mesh *mesh, int colour){
   //reset neighberhoods
   memset(vertices_in_neighberhood, false, mesh->NNodes);
 
-  for(std::list<int>::const_iterator it=to_examine_all.begin(); it!=to_examine_all.end(); ++it){
-    //if a vertex is not in the neighberhood
-    if( !vertices_in_neighberhood[*it] ){
-      //add to the 'to_examine_now'
-      to_examine_now.push_back(*it);
+  for(size_t it = 0; it < mesh->NNodes; it++){
+    //if a vertex is not in the neighberhood and has to be examined
+    if( !vertices_in_neighberhood[it] && to_examine_all[it] ){
+      //mark vertex as examined
+      to_examine_all[it] = false;
+      vertices--;
+
       //add to a slice
-      slices[colour].push_back(*it);
+      slices[colour].push_back(it);
       //put in the neighberhood
-      vertices_in_neighberhood[*it] = true;
+      vertices_in_neighberhood[it] = true;
       //iterate over adjacent vertices and put them in the neighberhood
-      for(std::vector<size_t>::const_iterator nit=mesh->NNList[*it].begin(); nit!=mesh->NNList[*it].end(); ++nit){
+      for(std::vector<size_t>::const_iterator nit=mesh->NNList[it].begin(); nit!=mesh->NNList[it].end(); ++nit){
         vertices_in_neighberhood[*nit] = true;
       }
     }
-  }
-}
-
-void remove_vertices(Mesh* mesh){
-  //remove items in `to_examine_now` from `to_examine_all`
-  for( std::list<int>::const_iterator it=to_examine_now.begin(); it!=to_examine_now.end(); ++it ){
-    to_examine_all.remove(*it);
   }
 }
 
@@ -71,19 +65,21 @@ void smooth_parallel(Mesh* mesh, int iter){
   populate_vertices( mesh );
 
   int colour = 0;
-  while( ! to_examine_all.empty()){
+  vertices = mesh->NNodes; 
+
+  while( vertices > 0 ){
     std::vector<int> v;
     slices.push_back(v);
 
     select_vertices( mesh, colour );
-    remove_vertices( mesh );
-
+ 
     colour++;
   }
 
   printf("%d\n", colour);
 
   delete vertices_in_neighberhood;
+  delete to_examine_all;
 }
 
 void smooth(Mesh* mesh, size_t niter){
