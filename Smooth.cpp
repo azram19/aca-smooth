@@ -163,21 +163,25 @@ void smooth_job(Mesh * mesh, size_t vertex, double * quality_cache, bool * verti
   }
 }
 
+//possibly divide into 8-16 threads max
 void spawn_threads(Mesh * mesh, size_t colour, double * quality_cache, bool * vertice_in_cache, int iter){
   std::vector<std::future<void> > futures;
+  
+  const int MAX_THREADS = 16;
 
-  //for each element in to_examine_now spawn new smooth_job
-  std::for_each(slices[colour].begin(), slices[colour].end(), [&](int & v)
-  {
-    auto f = std::async( std::launch::async, smooth_job, mesh, v, quality_cache, vertice_in_cache, iter );
-    futures.push_back( std::move( f ) );
-  });
+  for(auto i = slices[colour].begin(); i < slices[colour].end(); i++){
+    for(int j = 0; j < MAX_THREADS, i < slices[colour].end(); j++, i++){
+      auto f = std::async( std::launch::async, smooth_job, mesh, *i, quality_cache, vertice_in_cache, iter );
+      futures.push_back( std::move( f ) );
+    }
+    //barrier
+    std::for_each(futures.begin(), futures.end(), [](std::future<void> & f)
+    {
+        f.wait();
+    });
 
-  //barrier
-  std::for_each(futures.begin(), futures.end(), [](std::future<void> & f)
-  {
-      f.wait();
-  });
+    futures.clear();
+  }
 }
 
 void smooth_parallel(Mesh* mesh, int niter){
@@ -198,8 +202,6 @@ void smooth_parallel(Mesh* mesh, int niter){
 
   delete[] vertices_in_neighberhood;
   delete[] to_examine_all;
-  vertices_in_neighberhood = nullptr;
-  to_examine_all = nullptr;
 
   //Execution phase
   svd_init( mesh->NNodes );
@@ -222,8 +224,8 @@ void smooth_parallel(Mesh* mesh, int niter){
 }
 
 void smooth(Mesh* mesh, size_t niter){
-  smooth_parallel(mesh, niter);
-  return;
+  //smooth_parallel(mesh, niter);
+  //return;
 
   svd_init( mesh->NNodes );
 
