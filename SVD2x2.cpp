@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <cstdio>
+#include <cstring>
 
 #include "SVD2x2.hpp"
 
@@ -119,22 +120,23 @@ void calc_eigenvectors(const double A[4],
 }
 
 double ** svd2x2cache;
-int cachedVid;
+bool * cachedVid;
 /*
  * Solves the 2D linear system Ap=q using SVD
  */
 void svd_init(int nelements){
   svd2x2cache = new double*[nelements];
-  cachedVid = -1;
+  cachedVid = new bool[nelements];
+  memset(cachedVid, false, nelements);
 }
 
 void svd_teardown(int nelements){
   for(int i = 0; i < nelements; i++){
-    delete svd2x2cache[i];
+    delete[] svd2x2cache[i];
   }
 
-  delete svd2x2cache;
-  cachedVid = -1;
+  delete[] cachedVid;
+  delete[] svd2x2cache;
 }
 
 void svd_solve_2x2(int vid, const double A[4], double p[2], const double q[2]){
@@ -154,7 +156,7 @@ void svd_solve_2x2(int vid, const double A[4], double p[2], const double q[2]){
    * Σinv: the inverse of Σ,
    * Utransp: the transpose of U
    */
-  if( vid <= cachedVid ){
+  if( cachedVid[vid] ){
     auto V = svd2x2cache[vid];
     p[0] = V[0]*q[0] + V[1]*q[1];
     p[1] = V[2]*q[0] + V[3]*q[1];
@@ -246,7 +248,7 @@ void svd_solve_2x2(int vid, const double A[4], double p[2], const double q[2]){
    */
   double * cacheV = new double[4] { V[0], V[1], V[2], V[3] };
   svd2x2cache[vid] = cacheV;
-  cachedVid = vid;
+  cachedVid[vid] = true;
 
   p[0] = V[0]*q[0] + V[1]*q[1];
   p[1] = V[2]*q[0] + V[3]*q[1];
