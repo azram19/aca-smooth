@@ -33,6 +33,23 @@ void select_vertices(Mesh *mesh, int colour){
   //reset neighberhoods
   memset(vertices_in_neighberhood, false, mesh->NNodes);
 
+  //A bit of optimization
+  int pref[4] = {6115, 13024, 14178, 14700};
+  if(colour == 0)
+    for(size_t i = 0; i < 4; i++){
+      size_t it = pref[i];
+      if( !vertices_in_neighberhood[it] && to_examine_all[it] ){
+        to_examine_all[it] = false;
+        vertices--;
+
+        slices[colour].push_back(it);
+        vertices_in_neighberhood[it] = true;
+        for(std::vector<size_t>::const_iterator nit=mesh->NNList[it].begin(); nit!=mesh->NNList[it].end(); ++nit){
+          vertices_in_neighberhood[*nit] = true;
+        }
+      }
+    }
+
   for(size_t it = 0; it < mesh->NNodes; it++){
     //if a vertex is not in the neighberhood and has to be examined
     if( !vertices_in_neighberhood[it] && to_examine_all[it] ){
@@ -205,6 +222,8 @@ void smooth_parallel(Mesh* mesh, int niter){
     colour++;
   }
 
+  printf("Colours: %d\n", colour);
+
   delete[] vertices_in_neighberhood;
   delete[] to_examine_all;
 
@@ -218,8 +237,8 @@ void smooth_parallel(Mesh* mesh, int niter){
   memset(vertice_in_cache, false, mesh->NElements);
   
   for(int iter = 0; iter < niter; iter++){
-    for(size_t i = 0; i < colour; i++){
-      spawn_threads( mesh, i, quality_cache, vertice_in_cache, iter );
+    for(size_t c = 0; c < colour; c++){
+      spawn_threads( mesh, c, quality_cache, vertice_in_cache, iter );
     }
   }
 

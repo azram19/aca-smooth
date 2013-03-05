@@ -1,4 +1,4 @@
-CXXFLAGS = -std=c++11 -g -pthread -O3 -mrecip=all -ffast-math -Wall -Wno-deprecated -I./vtk/include/vtk-5.10 -funsafe-math-optimizations -march=core2 -mtune=core2 -mfpmath=sse -mveclibabi=svml -fomit-frame-pointer -funroll-loops -ftree-vectorize
+CXXFLAGS = -std=c++11 -pthread -O3 -mrecip=all -ffast-math -Wall -Wno-deprecated -I./vtk/include/vtk-5.10 -funsafe-math-optimizations -march=core2 -mtune=core2 -mfpmath=sse -mveclibabi=svml -fomit-frame-pointer -funroll-loops -ftree-vectorize
 
 OBJS = ACA2-2013.o Mesh.o Smooth.o SVD2x2.o
 

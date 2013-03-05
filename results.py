@@ -7,7 +7,7 @@ import json
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-iterations = 20
+iterations = 1
 
 def call_command(command):
     process = subprocess.Popen(command.split(' '),
@@ -71,8 +71,9 @@ def main():
 		v = k['hash']
 
 		#checkout selected revision
-		call_command( "git checkout %s" % (v,) )
-		
+		output, err = call_command( "git checkout %s" % (v,) )
+		print output, err
+
 		#build the program
 		call_command( "make clean" )
 		call_command( "make" )
@@ -92,6 +93,8 @@ def main():
 	call_command( "git checkout master" )
 	call_command( "make clean" )
 	call_command( "make" )
+
+	print statistics
 
 	print json.dumps( extract_statistics( statistics ) )
 
