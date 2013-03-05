@@ -7,7 +7,7 @@ import json
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-iterations = 1
+iterations = 20
 
 def call_command(command):
     process = subprocess.Popen(command.split(' '),
