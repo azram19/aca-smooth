@@ -54,10 +54,10 @@ def main():
 			"hash" : "abd8944109bd5d30fb3ae5ad0e8211144eda2b53"
 		},
 		{	"comment": "GCC compiler flags for the architecture",
-			"hash" :  : "f84e4c15f48379e29980b8922c7b8d36fb39c5ef"
+			"hash" :  "f84e4c15f48379e29980b8922c7b8d36fb39c5ef"
 		},
 		{	"comment": "Cache calculations",
-			"hash" :  : "78dc56b780322cb9170ec3cd036fa6d2b1abe0c2"
+			"hash" :  "78dc56b780322cb9170ec3cd036fa6d2b1abe0c2"
 		},
 		{
 			"comment" : "Multithreading",
