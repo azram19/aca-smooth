@@ -58,6 +58,10 @@ def main():
 		},
 		{	"comment": "Cache calculations",
 			"hash" :  : "78dc56b780322cb9170ec3cd036fa6d2b1abe0c2"
+		},
+		{
+			"comment" : "Multithreading",
+			"hash" : "4832d252005ea59a25fd63522e5681fda059d161"
 		}
 	]
 
