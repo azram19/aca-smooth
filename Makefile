@@ -1,4 +1,4 @@
-CXXFLAGS = -v -std=c++0x -stdlib=libc++ -pthread -O3 -I/homes/rjk110/libc++/include/c++/v1 -I../../llvm/lib/clang/3.3/include -I./vtk/include/vtk-5.10 -Wall -Wno-deprecated -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mavx -funsafe-math-optimizations -march=corei7-avx -mtune=corei7-avx -mfpmath=sse -mveclibabi=svml -fomit-frame-pointer -funroll-loops -ftree-vectorize
+CXXFLAGS = -v -std=c++0x -stdlib=libc++ -pthread -O3 -I/homes/rjk110/libc++/include/c++/v1 -I/homes/rjk110/llvm/lib/clang/3.3/include -I./vtk/include/vtk-5.10 -Wall -Wno-deprecated -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mavx -funsafe-math-optimizations -march=corei7-avx -mtune=corei7-avx -mfpmath=sse -mveclibabi=svml -fomit-frame-pointer -funroll-loops -ftree-vectorize -fvectorize -fslp-vectorize
 
 CXX = clang++
 
