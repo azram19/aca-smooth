@@ -1,4 +1,4 @@
-CXXFLAGS = -v -std=c++0x -pthread -O4 -I./vtk/include/vtk-5.10 -Wall -Wno-deprecated -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mavx -funsafe-math-optimizations -march=corei7-avx -mtune=corei7-avx -mfpmath=sse -mveclibabi=svml -fomit-frame-pointer -funroll-loops -ftree-vectorize
+CXXFLAGS = -v -std=c++0x -pthread -O4 -I./vtk/include/vtk-5.10 -Wall -Wno-deprecated -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mavx -funsafe-math-optimizations -march=corei7-avx -mtune=corei7-avx -mfpmath=sse -mveclibabi=svml -fomit-frame-pointer -funroll-loops -ftree-vectorize -ffast-math
 
 CXX = g++
 
