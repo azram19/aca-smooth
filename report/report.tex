@@ -352,7 +352,7 @@
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{Advanced Computer Architecture \\ The \“Smooth\” Challenge}
+\title{Advanced Computer Architecture \\ The “Smooth” Challenge}
 
 % author names and affiliations
 % use a multiple column layout for up to three different
@@ -395,8 +395,6 @@ Email: }}
 
 % use for special paper notices
 %\IEEEspecialpapernotice{(Invited Paper)}
-
-
 
 
 % make the title area
@@ -568,10 +566,16 @@ The first significant observation was that SVDs are solved multiple times while 
 
 The second observation was that we use graph coloring to divide the mesh into a set of categories. Vertices in a category are not dependent on each other which allows us to smoothen them in parallel. At the beginning we started by having a light separate thread or each vertex, but after performance analysis we have settled down on few computing heavy threads.
 
-
+We also found that C++ standard library data structures, and iterators are not fast enough when there are millions of iterations and memory accesses. As a result of it we used dynamic arrays wherever possible. 
 
 \section{Performance Improvements}
-Chosen mesh size
+
+During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple times the same values. We use a simplified memoization to achieve that. We use ids to keep track of function calls and return values. Solutions are stored in a cache, build using an array with vertex id being an index of the value. In the function we check if the value exists in the cache. Ff it is there we simply return it, otherwise we execute the function, and store the computed value in the cache.
+
+We started transformation from sequential smoothing to a multi-threaded execution by deciding on a graph coloring algorithm we will use. The number of colors used for our graph had direct implications on performance. With fewer colors we can achieve better performance by being able to execute more code in parallel and spending less time locking and synchronizing. We knew that the mesh is a planar graph and therefore can be colored with at most 4 colors. After looking at different algorithms we have decided that a simple, greedy algorithm will be the best. With more complicated algorithms the benefits of achieving coloring with fewer colors, may be outweighed by time required for development and debugging.
+
+Our simple greedy algorithm required only 6 different colors for the mesh. Once we have colored the graph we can start smoothing it. We launch a smoothing job for each color and we split vertices into a couple of groups which are there processed by separate threads. We use a synchronizing barrier to wait for all threads to terminate before we start processing the next color.  
+
 
 
 \section{Conclusion}
