@@ -186,7 +186,6 @@ void smooth_job(Mesh * mesh, size_t colour, double * quality_cache, bool * verti
 //possibly divide into 8-16 threads max
 void spawn_threads(Mesh * mesh, size_t colour, double * quality_cache, bool * vertice_in_cache, int iter){
   std::vector<std::future<void> > futures;
-  
   const int MAX_THREADS = 4;
   const int size = slices[colour].size();
   const double segment = size/MAX_THREADS;
@@ -194,7 +193,7 @@ void spawn_threads(Mesh * mesh, size_t colour, double * quality_cache, bool * ve
   for(int j = 0; j < MAX_THREADS; j++){
     int start_range = (int)j*segment;
     int end_range = std::min( (int)((j+1)*segment), size );
-    
+
     auto f = std::async( std::launch::async, smooth_job, mesh, colour, quality_cache, vertice_in_cache, iter, start_range, end_range );
     futures.push_back( std::move( f ) );
   }
@@ -209,7 +208,7 @@ void spawn_threads(Mesh * mesh, size_t colour, double * quality_cache, bool * ve
 void smooth_parallel(Mesh* mesh, int niter){
   //Colouring phase
   int colour = 0;
-  vertices = mesh->NNodes; 
+  vertices = mesh->NNodes;
 
   populate_vertices( mesh );
 
@@ -218,7 +217,7 @@ void smooth_parallel(Mesh* mesh, int niter){
     slices.push_back(v);
 
     select_vertices( mesh, colour );
- 
+
     colour++;
   }
 
@@ -232,10 +231,10 @@ void smooth_parallel(Mesh* mesh, int niter){
 
   double * quality_cache = new double[mesh->NElements];
   bool * vertice_in_cache = new bool[mesh->NElements];
-  
+
   memset(quality_cache, 0, mesh->NElements);
   memset(vertice_in_cache, false, mesh->NElements);
-  
+
   for(int iter = 0; iter < niter; iter++){
     for(size_t c = 0; c < colour; c++){
       spawn_threads( mesh, c, quality_cache, vertice_in_cache, iter );
@@ -243,7 +242,7 @@ void smooth_parallel(Mesh* mesh, int niter){
   }
 
   svd_teardown( mesh->NNodes );
-  
+
   delete[] quality_cache;
   delete[] vertice_in_cache;
 }
