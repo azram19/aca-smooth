@@ -564,11 +564,14 @@ With two separate cores the second obvious move was to fully utilize power of bo
 \section{Application Analysis}
 The first step in analyzing the application's code base was to rearrange equations and extract small sections of them which are computed multiple times. After the code has been divided we looked as each expression and evaluated whether it's a constant or a variable. We needed to determine that to able to observe the data flow in the application, and to detect areas which could be parallelized or which were unnecessarily computed.
 
-The first significant observation was that SVDs are computed multiple times while the parameters which they depend on does not change between iterations. We used that to use technique called memoization to make sure that we are not computing the same values multiple times.  
+The first significant observation was that SVDs are solved multiple times while the parameters which they depend on does not change between iterations. We used that fact to use technique called memoization which guarantees that we solve each SVD only once.
+
+The second observation was that we use graph coloring to divide the mesh into a set of categories. Vertices in a category are not dependent on each other which allows us to smoothen them in parallel. At the beginning we started by having a light separate thread or each vertex, but after performance analysis we have settled down on few computing heavy threads.
+
+
 
 \section{Performance Improvements}
 Chosen mesh size
-
 
 
 \section{Conclusion}
