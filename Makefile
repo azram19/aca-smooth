@@ -11,7 +11,7 @@ TARGET = ACA2-2013
 $(TARGET):	$(OBJS)
 	@$(CXX) -v -o $(TARGET) $(OBJS) $(LIBS)
 
-all:	@$(TARGET)
+all: @$(TARGET)
 
 clean:
 	@rm -f $(OBJS) $(TARGET)
