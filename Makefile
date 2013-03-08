@@ -4,7 +4,7 @@ CXX = g++
 
 OBJS = ACA2-2013.o Mesh.o Smooth.o SVD2x2.o
 
-LIBS = -L./vtk/lib/vtk-5.10 -lvtkIO -lvtkFiltering -lvtkCommon -lvtkzlib -lvtkexpat -lvtksys -ldl -lpthread 
+LIBS = -L./vtk/lib/vtk-5.10 -lvtkIO -lvtkFiltering -lvtkCommon -lvtkzlib -lvtkexpat -lvtksys -ldl -lpthread
 
 TARGET = ACA2-2013
 
