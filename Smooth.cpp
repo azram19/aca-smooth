@@ -186,7 +186,7 @@ void smooth_job(Mesh * mesh, size_t colour, double * quality_cache, bool * verti
 //possibly divide into 8-16 threads max
 void spawn_threads(Mesh * mesh, size_t colour, double * quality_cache, bool * vertice_in_cache, int iter){
   std::vector<std::future<void> > futures;
-  const int MAX_THREADS = 4;
+  const int MAX_THREADS = 8;
   const int size = slices[colour].size();
   const double segment = size/MAX_THREADS;
 
