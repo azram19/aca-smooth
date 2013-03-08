@@ -64,6 +64,11 @@
 % draft mode.
 %
 \documentclass[conference]{IEEEtran}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
 % Add the compsoc option for Computer Society conferences.
 %
 % If IEEEtran.cls has not been installed into the LaTeX system files,
@@ -596,6 +601,30 @@ Our simple greedy algorithm required only 6 different colors for the mesh. With 
 
 %Compiler
 Once we finished modifying the code, we have decided to try a different compiler. We did not want to switch to another compiler too early to keep the development simple. As it turned out ... (ROB)
+
+
+\begin{tikzpicture}
+  \begin{axis}[
+    stack plots=y,
+    area style,
+    enlarge x limits=false]
+  \addplot coordinates
+    {(0,7.04418)  (1,7.02896) (2,7.00861) (3,6.98379) (4,7.0974)  (5,7.01502) (6,7.06628) (7,6.99485) (8,7.00689) (9,7.16448)} 
+    \closedcycle;
+   \addplot coordinates
+    {(0,2.53058)  (1,2.51935) (2,2.51058) (3,2.51025) (4,2.51287) (5,2.51038) (6,2.52254) (7,2.51972) (8,2.529) (9,2.5193)} 
+    \closedcycle;
+  \addplot coordinates
+    {(0,2.25336)  (1,2.3073)  (2,2.25567) (3,2.24655) (4,2.24741) (5,2.26388) (6,2.24825) (7,2.24406) (8,2.25263) (9,2.29602)} 
+    \closedcycle;
+  \addplot coordinates
+    {(0,1.01862)  (1,1.02593) (2,1.02583) (3,1.12799) (4,1.01136) (5,1.02239) (6,1.07915) (7,1.00443) (8,1.03164) (9,1.03658)} 
+    \closedcycle;
+  \addplot coordinates
+    {(0,0.902379) (1,0.896919)  (2,0.863794)  (3,0.997336)  (4,0.914804)  (5,0.856639)  (6,0.859562)  (7,0.914349)  (8,0.897033)  (9,0.866656)} 
+    \closedcycle;
+  \end{axis}
+\end{tikzpicture}
 
 \section{Conclusion}
 We are awesome.
