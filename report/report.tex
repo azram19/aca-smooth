@@ -606,7 +606,7 @@ Once we have exhausted other options we decided to try different compilers. We u
   Rev 3 & Memoization of computations \\ \hline
   Rev 4 & Multi threading with 4 threads and GCC 4.6 \\ \hline
   Rev 5 & Multi threading with 8 threads and GCC 4.8 \\ \hline
-  Rev 6 & Experiments during report writing \\ \hline
+  Rev 6 & Final experiments \\ \hline
 \end{tabular}
 
 %Low level optimizations
@@ -731,10 +731,40 @@ Our simple greedy algorithm required only 6 different colors for the mesh. With 
 \vskip 1em
 
 \subsection{Compiler}
-Apart from looking at how to make the application itself better we also looked at how to make it more compatible at architectural level. Once we finished modifying the code, we have decided to try a different compiler. Early on in the development and research process we stayed with what was avialable at our machine, i.e. gcc 4.6. We have tried many different options, however, most of them did not yield a running program. We have started with our research into LLVM. In the latest version this compiler introduced improved loop vectorizer. We had hoped, after looking at the code, that we could just make compiler vectorize them for us yeilding performance improvement. However, we soon realised that the code we had is not so simply vectorizable, or at least we had hard time to come up with a good way to do that. Furthermore compiling LLVM 3.3 from source has proven to be not an easy task. To be more precise, the actual compilation is quite trivial, problem is with obtaining compatible and bug free c++ standard library. Hence, we did not manage to have a working version of code compiled by this compiler. However, what we managed to present and is included in our results is newer version of gcc. It has been done mostly as a test to see wether compiler improvements give any performance improvement to our application. As it turns out specific compiler options cause more difference than changing compiler version by two minor numbers. It's quite encouraging to see that current level compilers are in a good state when it comes to performance optimizations no matter the version. However, it left us wondering what the compiler writers are focused on.
+Apart from looking at how to make the application itself better we also looked at how to make it more compatible at architectural level. Once we finished modifying the code, we have decided to try a different compiler. Early on in the development and research process we stayed with what was avialable at our machine, i.e. gcc 4.6. We have tried many different options, however, most of them did not yield a running program. We have started with our research into LLVM. In the latest version this compiler introduced improved loop vectorizer. We had hoped, after looking at the code, that we could just make compiler vectorize them for us yeilding performance improvement. However, we soon realised that the code we had is not so simply vectorizable, or at least we had hard time to come up with a good way to do that. Furthermore compiling LLVM 3.3 from source has proven to be not an easy task. To be more precise, the actual compilation is quite trivial, problem is with obtaining compatible and bug free c++ standard library. Hence, we did not manage to have a working version of code compiled by this compiler. However, what we managed to present and is included in our results is newer version of gcc. It has been done mostly as a test to see whether compiler improvements give any performance improvement to our application. As it turns out specific compiler options cause more difference than changing compiler version by two minor numbers. It's quite encouraging to see that current level compilers are in a good state when it comes to performance optimizations no matter the version. However, it left us wondering what the compiler writers are focused on.
 
 \section{Conclusion}
-We are awesome.
+We achieved outstanding performance improvement, speeding up the application over eight times. 
+
+What is most surprising is how much quality of the compiler and its configuration can affect performance. By carefully choosing compiler options and aiming with it for our architecture we were able to increase the performance threefold. 
+
+Even tough we attempted to parallelize the application as much as possible, multi threading improved the performance only 2.5 times. Executing code in eight separate threads, each utilizing its core to around 100\% we expected to gain much more.
+
+For the last revisions of the application we had to switch from small mesh to a medium sized one. As the time of execution dropped below 1s it became more volatile and less statistically significant. 
+
+\begin{tikzpicture}
+  \begin{axis}[
+    legend style={
+    at={(1,0.5)},
+    anchor=east
+    },
+    title=Performance gain,
+    xmin=0,
+    xmax=7,
+    enlarge x limits=false,
+    ylabel=absolute performance,
+    yticklabel={\pgfmathparse{\tick}\pgfmathprintnumber{\pgfmathresult}\%},
+    xlabel=revision]
+  \addplot[blue] coordinates
+    {(1,100.00)  (2,279.58) (3,311.34) (4,678.07) (5,785.00)};
+  \addlegendentry{Small mesh}
+  \addplot[red] coordinates
+    {(1,100.00)  (2,270.77) (3,313.54) (4,637.70) (5,788.53) (6,823.12)};
+  \addlegendentry{Medium mesh}
+  \end{axis}
+\end{tikzpicture}
+
+One of the first hypothesis we rejected almost immediately was to work on cache performance. Cachegrind analysis revealed that the number of cache misses is insignificant and it does not throttle the execution. After performing final evaluation we know that we were right rejecting that theory. We can see that performance increases at the same rate for both small and medium sized mesh. If the application was affected by cache performance we would have noticed it in the performance of the medium sized mesh. No slow down have been observed and we can confirm that cache had little or no effect on the performance.
 
 \vskip 1em
 \begin{tikzpicture}
@@ -748,37 +778,22 @@ We are awesome.
     {(0,7.04418)  (1,7.02896) (2,7.00861) (3,6.98379) (4,7.0974)  (5,7.01502) (6,7.06628) (7,6.99485) (8,7.00689) (9,7.16448)}
     \closedcycle;
   \addlegendentry{Rev 1}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,7.041) (9,7.041)}
-    \closedcycle;
    \addplot[fill=second] coordinates
     {(0,2.53058)  (1,2.51935) (2,2.51058) (3,2.51025) (4,2.51287) (5,2.51038) (6,2.52254) (7,2.51972) (8,2.529) (9,2.5193)}
     \closedcycle;
   \addlegendentry{Rev 2}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,2.518) (9,2.518)}
-    \closedcycle;
   \addplot[fill=third] coordinates
     {(0,2.25336)  (1,2.3073)  (2,2.25567) (3,2.24655) (4,2.24741) (5,2.26388) (6,2.24825) (7,2.24406) (8,2.25263) (9,2.29602)}
     \closedcycle;
   \addlegendentry{Rev 3}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,2.261) (9,2.261)}
-    \closedcycle;
   \addplot[fill=fourth] coordinates
     {(0,1.01862)  (1,1.02593) (2,1.02583) (3,1.12799) (4,1.01136) (5,1.02239) (6,1.07915) (7,1.00443) (8,1.03164) (9,1.03658)}
     \closedcycle;
   \addlegendentry{Rev 4}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,1.038) (9,1.038)}
-    \closedcycle;
   \addplot[fill=fifth] coordinates
     {(0,0.902379) (1,0.896919)  (2,0.863794)  (3,0.997336)  (4,0.914804)  (5,0.856639)  (6,0.859562)  (7,0.914349)  (8,0.897033)  (9,0.866656)}
     \closedcycle;
   \addlegendentry{Rev 5}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,0.897) (9,0.897)}
-    \closedcycle;
   \end{axis}
 \end{tikzpicture}
 
@@ -793,71 +808,36 @@ We are awesome.
     {(0,53.7869) (1, 54.5058) (2,53.9052) (3,54.8274) (4,53.8769) (5,54.7137) (6,53.8338) (7,53.7187) (8,53.7161) (9,53.9564)}
     \closedcycle;
   \addlegendentry{Rev 1}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,54.08409)(9,54.08409)}
-    \closedcycle;
    \addplot[fill=second] coordinates
     {(0,20.2483) (1, 20.2372) (2,20.1327) (3,19.8411) (4,19.7237) (5,19.7434) (6,20.2217) (7,20.3009) (8,19.7053) (9,19.5902)}
     \closedcycle;
   \addlegendentry{Rev 2}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,19.97445)(9,19.97445)}
-    \closedcycle;
   \addplot[fill=third] coordinates
     {(0,17.1739) (1, 17.2485) (2,17.2418) (3,17.2849) (4,17.2385) (5,17.2462) (6,17.2613) (7,17.2998) (8,17.2925) (9,17.2096)}
     \closedcycle;
-  \addlegendentry{Rev 3}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,17.2497)(9,17.2497)}
-    \closedcycle;
+  \addlegendentry{Rev 3}  
   \addplot[fill=fourth] coordinates
     {(0,8.3611) (1,8.38078) (2,8.38714) (3,8.24693) (4,8.46204) (5,8.29801) (6,8.30111) (7,8.43508) (8,8.36146) (9,9.5774)}
     \closedcycle;
   \addlegendentry{Rev 4}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,8.481105)(9,8.481105)}
-    \closedcycle;
   \addplot[fill=fifth] coordinates
     {(0,7.39716) (1, 6.77087) (2,6.77265) (3,6.76595) (4,6.73421) (5,6.89551) (6,6.80409) (7,6.76463) (8,6.82767) (9,6.85561)}
     \closedcycle;
   \addlegendentry{Rev 5}
-  \addplot[style=densely dashed,forget plot] coordinates
-    {(0,6.858835)(9,6.858835)}
+  \addplot[fill=sixth] coordinates
+    {(0,6.58) (1,6.67)  (2,6.56)  (3,6.51)  (4,6.56)  (5,6.51)  (6,6.54) (7,6.72) (8,6.54) (9,6.53)}
     \closedcycle;
-  \end{axis}
-\end{tikzpicture}
-
-\begin{tikzpicture}
-  \begin{axis}[
-    title=Performance gain,
-    xmin=1,
-    xmax=5,
-    enlarge x limits=false,
-    ylabel=execution time(s),
-    xlabel=revision]
-  \addplot[mark=x] coordinates
-    {(1,7.041046)  (2,2.518457) (3,2.261513) (4,1.038392) (5,0.8969471)}
-    \closedcycle;
+  \addlegendentry{Rev 6}
   \end{axis}
 \end{tikzpicture}
 
 
-% conference papers do not normally have an appendix
-
-
-% use section* for acknowledgement
-\section*{Acknowledgment}
-
-
-The authors would like to thank...
-
-
-\section*{Data}
 \begin{sidewaystable}
 \centering
+Table of execution times used to evaluate performance of the application\\[10pt]
 \begin{tabular}{ |c|c|c|c|c|c|c|c|c|c|c|c|c|c| }
   \hline
-  R & \multicolumn{10}{|c|}{exectuion time} & average & absolute performance & relative performance \\
+  Revision & \multicolumn{10}{|c|}{execution time} & average time & absolute performance & relative performance \\
   \hline \hline
   \multicolumn{14}{|c|}{small mesh} \\ \hline
 1 & 7.04 &  7.03 &  7.01 &  6.98 &  7.10 &  7.02 &  7.07 &  6.99 &  7.01 &  7.16 &  7.04 &  100.00\% & 100.00\% \\ \hline
