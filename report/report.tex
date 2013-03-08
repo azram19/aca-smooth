@@ -407,8 +407,6 @@ Email: robert.kruszewski10@imperial.ac.uk}}
 %\IEEEauthorblockA{\IEEEauthorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
 
 
-
-
 % use for special paper notices
 %\IEEEspecialpapernotice{(Invited Paper)}
 
@@ -580,21 +578,47 @@ With two separate cores the second obvious move was to fully utilize power of bo
 
 
 \section{Application Analysis}
+The next step after looking at the available hardware was to look at the software.
+We observed and noted behavior of the application, its bottlenecks and data flow.
+All that data insight allowed us to improve performance of the application in a systematic order.
+
+\subsection{Computations}
+We started analysis by looking at the equations and functions within the application. 
+It gave us insight into the logical flow of instructions. 
+By using callgrind we were able to spot bottlnecks and note areas which required the most of CPU time and therefore were most prone to improvements.
+At this step we were also able to spot functions which even if inefficient, where not influencing performance enough to justify time spent on them.
+We decided to focus only on improvements that would yield measurable gains.
 
 \subsection{Data Flow}
-The first step in analyzing the application's code base was to rearrange equations and extract small sections of them which are computed multiple time. After the code has been divided we looked as each expression and evaluated whether it's a constant or a variable. We needed to determine that to able to observe the data flow in the application, and to detect areas which could be parallelized or which were unnecessarily computed.
+We wanted to understand what is happening and how sections of code depend on each other. 
+The understanding of how loops depend on each other and which parameters are modified within an iteration provided us with invaluable information about redundant portions of code.
+At this step we also spend some time annotating code with insights into possible improvements for a particular area.
+We used three main annotations - 'constant', 'parallelize'.
+
+'Constant' was used to emphasize a value or expression which once computed or assigned never changes its value. Functions with this property were considered for memoization to provide constant time access to their value.
+
+'Parallelize' was used to point out sections of code and loops which could be at little or no cost executed in parallel.
+
+\section{Observations}
 
 \subsection{SVD}
-The first significant observation was that SVDs are solved multiple time while the parameters which they depend on does not change between iterations. We used that fact to use technique called memoization which guarantees that we solve each SVD only once.
+The first significant observation was that during each smoothing iteration we solve a matrix which values are not modified between iterations.
+The obvious solution was to use memoization technique and solve the matrix only on the first call to the function. 
+On each following call we would simply return the value. 
 
-\subsection{Possible Parallelism}
-The second observation was that we can use graph coloring to divide the mesh into a set of categories. Vertices in a category are not dependent on each other which allows us to smoothen them in parallel. At the beginning we started by having a light separate thread or each vertex, but after performance analysis we have settled down on few computationally heavy threads.
+\subsection{Parallelism}
+The second observation was that we could execute smoothing using multiple threads. 
+We could not simply divide vertices into few sets and process them in parallel, because each element depends on multiple vertices.
+By operating on two nodes at the same time, and computing their elements' quality we may end up with data hazards.
+To divide nodes into independent sets we used graph coloring.
+Graph coloring is a technique of assigning a 'color' (number) to each node in a graph such that no two adjacent nodes have the same color.
+That guarantees that they are not connected and are fully independent of each other.
 
-\subsection{C++ std}
-We also found that C++ standard library data structures are not fast enough for out purpose. Tens of millions of iterations using iterators caused a significant slowdown to the application. As a result of it we used dynamic arrays wherever possible.
-
-\subsection{Different Compiler}
-Once we have exhausted other options we decided to try different compilers. We used GCC 4.6.3 as our basic compiler, but we were aware that a new version 4.8 exists which brings a significant set of improvements. We also wanted to try Clang compiler which boldly claimed up to 2.5x speed improvement over GCC.
+\subsection{Compiler}
+The third observations was that default configuration of the compiler does not guarantee maximum performance and does not utilize all optimizations available for our platform. 
+We started with GCC 4.6 and a long set of flags crafted for our purpose.
+Later on we upgraded it to version 4.8 which allowed us to take advantage of a couple of improvements.
+We also tried Clang 3.3 which was promising over twofold improvements, but we found its performance disappointing.
 
 \section{Performance Improvements}
 
@@ -637,7 +661,12 @@ Once we have exhausted other options we decided to try different compilers. We u
 \vskip 1em
 
 \subsection{Memoization - SVD cache}
-During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple time the same values. We use a simplified memoization technique to achieve that. Solutions are stored in a simple cache, built out of an array with a vertex id serving as an index. Before executing the function we check if the value for this vertex is already stored in the cache. If that's the case we return the value, without performing any computations.
+During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple time the same values. To implement that we used a hash map with number of the node in the mesh being an index. 
+If the id exists in the map we return value stored in there, otherwise we solve the matrix and store the solution for future references.
+Our initial implementation used std::vector us an underlying data structure (from the very beginning we assumed that actual maps will not be fast enough). 
+As it turned out with tens of millions of iteration even std::iterator may not be fast enough.
+After tunning a benchmark and verifying its results with callgrind we have noted that 10\% of all CPU time is spent on incrementing iterators.
+From that point onwards we used arrays and integer based iterations whenever possible. 
 
 \vskip 1em
 \begin{tikzpicture}
@@ -736,11 +765,11 @@ Apart from looking at how to make the application itself better we also looked a
 \section{Conclusion}
 We achieved outstanding performance improvement, speeding up the application over eight times. 
 
-What is most surprising is how much quality of the compiler and its configuration can affect performance. By carefully choosing compiler options and aiming with it for our architecture we were able to increase the performance threefold. 
+What is most surprising is how much quality of the compiler and its configuration affects performance. By carefully choosing options and aiming with them for our architecture we were able to increase the performance threefold.
 
-Even tough we attempted to parallelize the application as much as possible, multi threading improved the performance only 2.5 times. Executing code in eight separate threads, each utilizing its core to around 100\% we expected to gain much more.
+Even tough we attempted to parallelize the application as much as possible, multi threading improved the performance only 2.5 times. Executing code in eight separate threads, each utilizing its core to around 100\% we expected to gain much more. We speculate that we could have achieved better cores utilization by dynamically dispatching smoothing jobs. Instead we settled on a simpler to develop and verify approach of running jobs in a previously generated order.
 
-For the last revisions of the application we had to switch from small mesh to a medium sized one. As the time of execution dropped below 1s it became more volatile and less statistically significant. 
+For the last revisions of the application we had to change size for mesh from small to medium. As the time of execution dropped below 1s performance evaluations became too volatile and not statistically significant.
 
 \begin{tikzpicture}
   \begin{axis}[
@@ -830,7 +859,6 @@ One of the first hypothesis we rejected almost immediately was to work on cache 
   \addlegendentry{Rev 6}
   \end{axis}
 \end{tikzpicture}
-
 
 \begin{sidewaystable}
 \centering
