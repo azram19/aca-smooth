@@ -558,7 +558,7 @@ Our test machines have following specification:\\\\
 \emph{Language} C++11
 
 \subsection{Compiler flags}
-With our experience in compiler writing we knew that they can make a huge difference. Even though the initial code used \"-O3\" flag, which is a very aggresive optimisation, we thought that there still must be a room for improvement. First of all we decided to tune compiler parameters for given architecutre. Having looked at the code and realising that mathematical operations are at the core of the algorithm we decided to turn on approximate math functions in order to gain performance improvements. Fortunately we did not spot regressions in quality of the results which could have prevented us from using this option.
+With our experience in compiler writing we knew that they can make a huge difference. Even though the initial code used ''-O3'' flag, which is a very aggresive optimisation, we thought that there still must be a room for improvement. First of all we decided to tune compiler parameters for given architecutre. Having looked at the code and realising that mathematical operations are at the core of the algorithm we decided to turn on approximate math functions in order to gain performance improvements. Fortunately we did not spot regressions in quality of the results which could have prevented us from using this option.
 
 \subsection{Parallelization}
 With four hyperthreaded cores we knew that in order to fully utilise the machine we would need to parallelize our algorithm. We have tried first four and then eight threads running our computation. We have decided to use C++ async library which allows for thread dispatch and creation as a language level construct.
