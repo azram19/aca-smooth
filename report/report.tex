@@ -550,36 +550,53 @@ GCC 4.7.2
 Language
 C++11
 
-
+%intro
 We started work on speeding up the application by looking at available hardware, and possible techniques which could be applied to achieve better performance.
 
+%device
 We chose a 5 years old Toshiba laptop as our target device. It has a Intel Core 2 Due CPU with 2MB of cache and 2 cores, one tacked at 800 MHz, and another at 2.00 GHZ. There was 3GB of RAM memory. We were hoping to find a graphics card with CUDA support, but we were unlucky here.
 
+%flags
 The first improvement that came to or mind was to optimize compiler's flags to target our platform. We expected it provide a huge gain considering that this micro architecture supports floating point vector operations and knowing that the code generation can significantly affect applications performance.
 
+%multithreading
 With two separate cores the second obvious move was to fully utilize power of both of them. That required detecting areas of the applications that were independent and could be run in parallel.
 
+
 \section{Application Analysis}
+%low level, data flow
 The first step in analyzing the application's code base was to rearrange equations and extract small sections of them which are computed multiple times. After the code has been divided we looked as each expression and evaluated whether it's a constant or a variable. We needed to determine that to able to observe the data flow in the application, and to detect areas which could be parallelized or which were unnecessarily computed.
 
+%svd
 The first significant observation was that SVDs are solved multiple times while the parameters which they depend on does not change between iterations. We used that fact to use technique called memoization which guarantees that we solve each SVD only once.
 
-The second observation was that we use graph coloring to divide the mesh into a set of categories. Vertices in a category are not dependent on each other which allows us to smoothen them in parallel. At the beginning we started by having a light separate thread or each vertex, but after performance analysis we have settled down on few computing heavy threads.
+%parallel
+The second observation was that we can use graph coloring to divide the mesh into a set of categories. Vertices in a category are not dependent on each other which allows us to smoothen them in parallel. At the beginning we started by having a light separate thread or each vertex, but after performance analysis we have settled down on few computing heavy threads.
 
-We also found that C++ standard library data structures, and iterators are not fast enough when there are millions of iterations and memory accesses. As a result of it we used dynamic arrays wherever possible. 
+%std and arrays
+We also found that C++ standard library data structures are not fast enough for out purpose. Tens of millions of iterations using iterators caused a significant slowdown to the application. As a result of it we used dynamic arrays wherever possible. 
+
+%compiler
+Once we have exhausted other options we decided to try different compilers. We used GCC 4.7.2 as our basic compiler, but we were aware that a new version 4.8 exists which brings a significant set of improvement. We also wanted to try Clang compiler which boldly claimed up to 2.5x speed improvement over GCC.   
 
 \section{Performance Improvements}
 
-During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple times the same values. We use a simplified memoization to achieve that. We use ids to keep track of function calls and return values. Solutions are stored in a cache, build using an array with vertex id being an index of the value. In the function we check if the value exists in the cache. Ff it is there we simply return it, otherwise we execute the function, and store the computed value in the cache.
+%Low level optimizations
 
+%Memoization - SVD cache
+During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple times the same values. We use a simplified memoization technique to achieve that. Solutions are stored in a simple cache, built out of an array with a vertex id serving as an index. Before executing the function we check if the value for this vertex is already stored in the cache. If that's the case we return the value, without performing any computations.
+
+%Colouring
 We started transformation from sequential smoothing to a multi-threaded execution by deciding on a graph coloring algorithm we will use. The number of colors used for our graph had direct implications on performance. With fewer colors we can achieve better performance by being able to execute more code in parallel and spending less time locking and synchronizing. We knew that the mesh is a planar graph and therefore can be colored with at most 4 colors. After looking at different algorithms we have decided that a simple, greedy algorithm will be the best. With more complicated algorithms the benefits of achieving coloring with fewer colors, may be outweighed by time required for development and debugging.
 
-Our simple greedy algorithm required only 6 different colors for the mesh. Once we have colored the graph we can start smoothing it. We launch a smoothing job for each color and we split vertices into a couple of groups which are there processed by separate threads. We use a synchronizing barrier to wait for all threads to terminate before we start processing the next color.  
+%Multi threading
+Our simple greedy algorithm required only 6 different colors for the mesh. With the graph colored we can process color after color, possibly with a separate thread for each vertex in a color. That's actually how we started with the attempt to parallelize the code. We launched thousands of threads, each operating on its own node. If the machine we were aiming for the TILE architecture with 72 cores on it we will have probably achieved outstanding performance. Unfortunately our architecture was different, and the the time required to finish smoothing was unsatisfactory \footnote{We actually don't know how long it would take. We did not have the patience to wait for it. Let's say it took infinitely long.}. As the result of it we have settled down on few threads, each processing it's own range of nodes. We made sure that threads do not share any data. That allowed us to avoid slow downs due to locking and synchronization. The only place in the application where we wait for the threads is the synchronization barrier for a color. We have to make sure all threads finished before we start processing another set of nodes.
 
-
+%Compiler
+Once we finished modifying the code, we have decided to try a different compiler. We did not want to switch to another compiler too early to keep the development simple. As it turned out ... (ROB)
 
 \section{Conclusion}
-The conclusion goes here.
+We are awsome.
 
 
 
