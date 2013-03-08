@@ -68,6 +68,8 @@
 \usepackage{mathtools}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepackage{xcolor}
+
 
 % Add the compsoc option for Computer Society conferences.
 %
@@ -354,6 +356,15 @@
 
 
 \begin{document}
+
+
+\definecolor{fourth}{RGB}{74,105,135}
+\definecolor{fifth}{RGB}{132,169,205}
+\definecolor{third}{RGB}{152,95,106}
+\definecolor{seventh}{RGB}{157,132,147}
+\definecolor{first}{RGB}{255,206,115}
+\definecolor{second}{RGB}{255,121,134}
+\definecolor{sixth}{RGB}{133,173,142}
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
@@ -570,10 +581,10 @@ With two separate cores the second obvious move was to fully utilize power of bo
 
 \section{Application Analysis}
 %low level, data flow
-The first step in analyzing the application's code base was to rearrange equations and extract small sections of them which are computed multiple times. After the code has been divided we looked as each expression and evaluated whether it's a constant or a variable. We needed to determine that to able to observe the data flow in the application, and to detect areas which could be parallelized or which were unnecessarily computed.
+The first step in analyzing the application's code base was to rearrange equations and extract small sections of them which are computed multiple time. After the code has been divided we looked as each expression and evaluated whether it's a constant or a variable. We needed to determine that to able to observe the data flow in the application, and to detect areas which could be parallelized or which were unnecessarily computed.
 
 %svd
-The first significant observation was that SVDs are solved multiple times while the parameters which they depend on does not change between iterations. We used that fact to use technique called memoization which guarantees that we solve each SVD only once.
+The first significant observation was that SVDs are solved multiple time while the parameters which they depend on does not change between iterations. We used that fact to use technique called memoization which guarantees that we solve each SVD only once.
 
 %parallel
 The second observation was that we can use graph coloring to divide the mesh into a set of categories. Vertices in a category are not dependent on each other which allows us to smoothen them in parallel. At the beginning we started by having a light separate thread or each vertex, but after performance analysis we have settled down on few computationally heavy threads. 
@@ -590,8 +601,56 @@ Once we have exhausted other options we decided to try different compilers. We u
 
 %Low level optimizations
 
+\begin{tikzpicture}
+  \begin{axis}[
+    title=Execution time for small.vtu,
+    area style,
+    ylabel=execution time(s),
+    xlabel=measurement,
+    enlarge x limits=false]
+  \addplot[fill=first] coordinates
+    {(0,7.04418)  (1,7.02896) (2,7.00861) (3,6.98379) (4,7.0974)  (5,7.01502) (6,7.06628) (7,6.99485) (8,7.00689) (9,7.16448)} 
+    \closedcycle;
+  \addlegendentry{Rev 1}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,7.041) (9,7.041)}
+    \closedcycle;
+   \addplot[fill=second] coordinates
+    {(0,2.53058)  (1,2.51935) (2,2.51058) (3,2.51025) (4,2.51287) (5,2.51038) (6,2.52254) (7,2.51972) (8,2.529) (9,2.5193)} 
+    \closedcycle;
+  \addlegendentry{Rev 2}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,2.518) (9,2.518)}
+    \closedcycle;
+  \end{axis}
+\end{tikzpicture}
+
 %Memoization - SVD cache
-During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple times the same values. We use a simplified memoization technique to achieve that. Solutions are stored in a simple cache, built out of an array with a vertex id serving as an index. Before executing the function we check if the value for this vertex is already stored in the cache. If that's the case we return the value, without performing any computations.
+During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple time the same values. We use a simplified memoization technique to achieve that. Solutions are stored in a simple cache, built out of an array with a vertex id serving as an index. Before executing the function we check if the value for this vertex is already stored in the cache. If that's the case we return the value, without performing any computations.
+
+\begin{tikzpicture}
+  \begin{axis}[
+  title=Execution time for small.vtu,
+    area style,
+    ylabel=execution time(s),
+    xlabel=measurement,
+    enlarge x limits=false]
+   \addplot[fill=second] coordinates
+    {(0,2.53058)  (1,2.51935) (2,2.51058) (3,2.51025) (4,2.51287) (5,2.51038) (6,2.52254) (7,2.51972) (8,2.529) (9,2.5193)} 
+    \closedcycle;
+  \addlegendentry{Rev 2}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,2.518) (9,2.518)}
+    \closedcycle;
+  \addplot[fill=third] coordinates
+    {(0,2.25336)  (1,2.3073)  (2,2.25567) (3,2.24655) (4,2.24741) (5,2.26388) (6,2.24825) (7,2.24406) (8,2.25263) (9,2.29602)} 
+    \closedcycle;
+  \addlegendentry{Rev 3}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,2.261) (9,2.261)}
+    \closedcycle;
+  \end{axis}
+\end{tikzpicture}
 
 %Colouring
 We started transformation from sequential smoothing to a multi-threaded execution by deciding on a graph coloring algorithm we will use. The number of colors used for our graph had direct implications on performance. With fewer colors we can achieve better performance by being able to execute more code in parallel and spending less time locking and synchronizing. We knew that the mesh is a planar graph and therefore can be colored with at most 4 colors. After looking at different algorithms we have decided that a simple, greedy algorithm will be the best. With more complicated algorithms the benefits of achieving coloring with fewer colors, may be outweighed by time required for development and debugging.
@@ -599,37 +658,171 @@ We started transformation from sequential smoothing to a multi-threaded executio
 %Multi threading
 Our simple greedy algorithm required only 6 different colors for the mesh. With the graph colored we can process color after color, possibly with a separate thread for each vertex in a color. That's actually how we started with the attempt to parallelize the code. We launched thousands of threads, each operating on its own node. If the machine we were aiming for the TILE architecture with 72 cores on it we will have probably achieved outstanding performance. Unfortunately our architecture was different, and the the time required to finish smoothing was unsatisfactory \footnote{We actually don't know how long it would take. We did not have the patience to wait for it. Let's say it took infinitely long.}. As the result of it we have settled down on few threads, each processing it's own range of nodes. We made sure that threads do not share any data. That allowed us to avoid slow downs due to locking and synchronization. The only place in the application where we wait for the threads is the synchronization barrier for a color. We have to make sure all threads finished before we start processing another set of nodes. We were expecting a speed up of about 3.5x knowing that most of CPU time is spend on smoothening, but being aware that we are unlikely to get higher performance due to few synchronizing stages. 
 
-%Compiler
-Once we finished modifying the code, we have decided to try a different compiler. We did not want to switch to another compiler too early to keep the development simple. As it turned out ... (ROB)
-
-
 \begin{tikzpicture}
   \begin{axis}[
-    stack plots=y,
+    title=Execution time for small.vtu,
     area style,
+    ylabel=execution time(s),
+    xlabel=measurement,
     enlarge x limits=false]
-  \addplot coordinates
-    {(0,7.04418)  (1,7.02896) (2,7.00861) (3,6.98379) (4,7.0974)  (5,7.01502) (6,7.06628) (7,6.99485) (8,7.00689) (9,7.16448)} 
-    \closedcycle;
-   \addplot coordinates
-    {(0,2.53058)  (1,2.51935) (2,2.51058) (3,2.51025) (4,2.51287) (5,2.51038) (6,2.52254) (7,2.51972) (8,2.529) (9,2.5193)} 
-    \closedcycle;
-  \addplot coordinates
+  \addplot[fill=third] coordinates
     {(0,2.25336)  (1,2.3073)  (2,2.25567) (3,2.24655) (4,2.24741) (5,2.26388) (6,2.24825) (7,2.24406) (8,2.25263) (9,2.29602)} 
     \closedcycle;
-  \addplot coordinates
+  \addlegendentry{Rev 3}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,2.261) (9,2.261)}
+    \closedcycle;
+  \addplot[fill=fourth] coordinates
     {(0,1.01862)  (1,1.02593) (2,1.02583) (3,1.12799) (4,1.01136) (5,1.02239) (6,1.07915) (7,1.00443) (8,1.03164) (9,1.03658)} 
     \closedcycle;
-  \addplot coordinates
+  \addlegendentry{Rev 4}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,1.038) (9,1.038)}
+    \closedcycle;
+  \addplot[fill=fifth] coordinates
     {(0,0.902379) (1,0.896919)  (2,0.863794)  (3,0.997336)  (4,0.914804)  (5,0.856639)  (6,0.859562)  (7,0.914349)  (8,0.897033)  (9,0.866656)} 
+    \closedcycle;
+  \addlegendentry{Rev 5}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,0.897) (9,0.897)}
     \closedcycle;
   \end{axis}
 \end{tikzpicture}
 
+\begin{tikzpicture}
+  \begin{axis}[
+    title=Execution time for medium.vtu,
+    area style,
+    ylabel=execution time(s),
+    xlabel=measurement,
+    enlarge x limits=false]
+  \addplot[fill=fourth] coordinates
+    {(0,8.3611) (1,8.38078) (2,8.38714) (3,8.24693) (4,8.46204) (5,8.29801) (6,8.30111) (7,8.43508) (8,8.36146)  (9,9.5774)} 
+    \closedcycle;
+  \addlegendentry{Rev 4}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,8.48) (9,8.48)}
+    \closedcycle;
+  \addplot[fill=fifth] coordinates
+    {(0,7.39716)  (1,6.77087) (2,6.77265) (3,6.76595) (4,6.73421) (5,6.89551) (6,6.80409) (7,6.76463) (8,6.82767)  (9,6.85561)} 
+    \closedcycle;
+  \addlegendentry{Rev 5}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,6.859) (9,6.859)}
+    \closedcycle;
+  \end{axis}
+\end{tikzpicture}
+
+
+%Compiler
+Once we finished modifying the code, we have decided to try a different compiler. We did not want to switch to another compiler too early to keep the development simple. As it turned out ... (ROB)
+
 \section{Conclusion}
 We are awesome.
 
+\begin{tikzpicture}
+  \begin{axis}[
+    title=Comparison of execution time for small.vtu,
+    area style,
+    ylabel=execution time(s),
+    xlabel=measurement,
+    enlarge x limits=false]
+  \addplot[fill=first] coordinates
+    {(0,7.04418)  (1,7.02896) (2,7.00861) (3,6.98379) (4,7.0974)  (5,7.01502) (6,7.06628) (7,6.99485) (8,7.00689) (9,7.16448)} 
+    \closedcycle;
+  \addlegendentry{Rev 1}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,7.041) (9,7.041)}
+    \closedcycle;
+   \addplot[fill=second] coordinates
+    {(0,2.53058)  (1,2.51935) (2,2.51058) (3,2.51025) (4,2.51287) (5,2.51038) (6,2.52254) (7,2.51972) (8,2.529) (9,2.5193)} 
+    \closedcycle;
+  \addlegendentry{Rev 2}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,2.518) (9,2.518)}
+    \closedcycle;
+  \addplot[fill=third] coordinates
+    {(0,2.25336)  (1,2.3073)  (2,2.25567) (3,2.24655) (4,2.24741) (5,2.26388) (6,2.24825) (7,2.24406) (8,2.25263) (9,2.29602)} 
+    \closedcycle;
+  \addlegendentry{Rev 3}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,2.261) (9,2.261)}
+    \closedcycle;
+  \addplot[fill=fourth] coordinates
+    {(0,1.01862)  (1,1.02593) (2,1.02583) (3,1.12799) (4,1.01136) (5,1.02239) (6,1.07915) (7,1.00443) (8,1.03164) (9,1.03658)} 
+    \closedcycle;
+  \addlegendentry{Rev 4}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,1.038) (9,1.038)}
+    \closedcycle;
+  \addplot[fill=fifth] coordinates
+    {(0,0.902379) (1,0.896919)  (2,0.863794)  (3,0.997336)  (4,0.914804)  (5,0.856639)  (6,0.859562)  (7,0.914349)  (8,0.897033)  (9,0.866656)} 
+    \closedcycle;
+  \addlegendentry{Rev 5}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,0.897) (9,0.897)}
+    \closedcycle;
+  \end{axis}
+\end{tikzpicture}
 
+\begin{tikzpicture}
+  \begin{axis}[
+    title=Comparison of execution time for medium.vtu,
+    area style,
+    ylabel=execution time(s),
+    xlabel=measurement,
+    enlarge x limits=false]
+  \addplot[fill=first] coordinates
+    {(0,53.7869) (1, 54.5058) (2,53.9052) (3,54.8274) (4,53.8769) (5,54.7137) (6,53.8338) (7,53.7187) (8,53.7161) (9,53.9564)} 
+    \closedcycle;
+  \addlegendentry{Rev 1}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,54.08409)(9,54.08409)}
+    \closedcycle;
+   \addplot[fill=second] coordinates
+    {(0,20.2483) (1, 20.2372) (2,20.1327) (3,19.8411) (4,19.7237) (5,19.7434) (6,20.2217) (7,20.3009) (8,19.7053) (9,19.5902)} 
+    \closedcycle;
+  \addlegendentry{Rev 2}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,19.97445)(9,19.97445)}
+    \closedcycle;
+  \addplot[fill=third] coordinates
+    {(0,17.1739) (1, 17.2485) (2,17.2418) (3,17.2849) (4,17.2385) (5,17.2462) (6,17.2613) (7,17.2998) (8,17.2925) (9,17.2096)} 
+    \closedcycle;
+  \addlegendentry{Rev 3}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,17.2497)(9,17.2497)}
+    \closedcycle;
+  \addplot[fill=fourth] coordinates
+    {(0,8.3611) (1,8.38078) (2,8.38714) (3,8.24693) (4,8.46204) (5,8.29801) (6,8.30111) (7,8.43508) (8,8.36146) (9,9.5774)} 
+    \closedcycle;
+  \addlegendentry{Rev 4}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,8.481105)(9,8.481105)}
+    \closedcycle;
+  \addplot[fill=fifth] coordinates
+    {(0,7.39716) (1, 6.77087) (2,6.77265) (3,6.76595) (4,6.73421) (5,6.89551) (6,6.80409) (7,6.76463) (8,6.82767) (9,6.85561)} 
+    \closedcycle;
+  \addlegendentry{Rev 5}
+  \addplot[style=densely dashed,forget plot] coordinates
+    {(0,6.858835)(9,6.858835)}
+    \closedcycle;
+  \end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+  \begin{axis}[
+    title=Performance gain,
+    xmin=1,
+    xmax=5,
+    enlarge x limits=false,
+    ylabel=execution time(s),
+    xlabel=revision]
+  \addplot[mark=x] coordinates
+    {(1,7.041046)  (2,2.518457) (3,2.261513) (4,1.038392) (5,0.8969471)} 
+    \closedcycle;
+  \end{axis}
+\end{tikzpicture}
 
 
 % conference papers do not normally have an appendix
