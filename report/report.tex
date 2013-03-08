@@ -765,8 +765,8 @@ Even tough we attempted to parallelize the application as much as possible, mult
 
 For the last revisions of the application we had to change size for mesh from small to medium. As the time of execution dropped below 1s performance evaluations became too volatile and not statistically significant.
 
-\subsection{Division of Work}
-We had split the work according to the aspects of the application it concerned. While Łukasz was working on making application faster in general, i.e. he implemented memoization and multithreading, Robert dealt with making the faster application utilise machine to full extent. He was making compiler adjustments, changing compiler and fine tuning code parameters as constness of variables, number of threads and simplifying operations performed by the application.
+
+One of the first hypothesis we rejected almost immediately was to work on cache performance. Cachegrind analysis revealed that the number of cache misses is insignificant and it does not throttle the execution. After performing final evaluation we know that we were right rejecting that theory. We can see that performance increases at the same rate for both small and medium sized mesh. If the application was affected by cache performance we would have noticed it in the performance of the medium sized mesh. No slow down have been observed and we can confirm that cache had little or no effect on the performance.
 
 \begin{tikzpicture}
   \begin{axis}[
@@ -789,8 +789,6 @@ We had split the work according to the aspects of the application it concerned. 
   \addlegendentry{Medium mesh}
   \end{axis}
 \end{tikzpicture}
-
-One of the first hypothesis we rejected almost immediately was to work on cache performance. Cachegrind analysis revealed that the number of cache misses is insignificant and it does not throttle the execution. After performing final evaluation we know that we were right rejecting that theory. We can see that performance increases at the same rate for both small and medium sized mesh. If the application was affected by cache performance we would have noticed it in the performance of the medium sized mesh. No slow down have been observed and we can confirm that cache had little or no effect on the performance.
 
 \vskip 1em
 \begin{tikzpicture}
@@ -856,6 +854,9 @@ One of the first hypothesis we rejected almost immediately was to work on cache 
   \addlegendentry{Rev 6}
   \end{axis}
 \end{tikzpicture}
+
+\subsection{Division of Work}
+We had split the work according to the aspects of the application it concerned. While Lukasz was working on making application faster in general, i.e. he implemented memoization and multithreading, Robert dealt with making the faster application utilise machine to full extent. He was making compiler adjustments, changing compiler and fine tuning code parameters as constness of variables, number of threads and simplifying operations performed by the application.
 
 \begin{sidewaystable}
 \centering
