@@ -416,8 +416,8 @@ Email: robert.kruszewski10@imperial.ac.uk}}
 
 
 \begin{abstract}
-Our task was to speed up given application us much possible. 
-During three weeks we worked on improving its performance by utilizing as much hardware power as possible and optimizing software. 
+Our task was to speed up given application us much possible.
+During three weeks we worked on improving its performance by utilizing as much hardware power as possible and optimizing software.
 We have achieved eightfold improvement adapting sequential code for multi threaded execution and using compiler to generate the fastest possible code for our architecture.
 We evaluated our progress by benchmarking the application multiple times on two sizes of the problem, after each major improvement.
 \end{abstract}
@@ -541,9 +541,9 @@ We evaluated our progress by benchmarking the application multiple times on two 
 
 \section{Hardware and Software Analysis}
 
-We have decided to use our lab machines as they are in abundance making testing easier. 
-Also as they are modern and powerful we wanted to see how far can we go we current consumer grade products. 
-We have begun our investigation by looking at limits of our hardware. 
+We have decided to use our lab machines as they are in abundance making testing easier.
+Also as they are modern and powerful we wanted to see how far can we go we current consumer grade products.
+We have begun our investigation by looking at limits of our hardware.
 With more than one core and abundance of main memory we had to test parallelization and caching in order to get maximal performance.
 We started by looking in details at the hardware, software and planning possible improvements.
 
@@ -564,14 +564,14 @@ With our experience in compiler writing we knew that they can make a huge differ
 With four hyperthreaded cores we knew that in order to fully utilise the machine we would need to parallelize our algorithm. We have tried first four and then eight threads running our computation. We have decided to use C++ async library which allows for thread dispatch and creation as a language level construct.
 
 \subsection{Computations}
-We started analysis by looking at the equations and functions within the application. 
-It gave us insight into the logical flow of instructions. 
+We started analysis by looking at the equations and functions within the application.
+It gave us insight into the logical flow of instructions.
 By using callgrind we were able to spot bottlnecks and note areas which required the most of CPU time and therefore were most prone to improvements.
 At this step we were also able to spot functions which even if inefficient, where not influencing performance enough to justify time spent on them.
 We decided to focus only on improvements that would yield measurable gains.
 
 \subsection{Data Flow}
-We wanted to understand what is happening and how sections of code depend on each other. 
+We wanted to understand what is happening and how sections of code depend on each other.
 The understanding of how loops depend on each other and which parameters are modified within an iteration provided us with invaluable information about redundant portions of code.
 At this step we also spend some time annotating code with insights into possible improvements for a particular area.
 We used two main annotations - 'constant' and 'parallelize'.
@@ -585,9 +585,8 @@ We used two main annotations - 'constant' and 'parallelize'.
 \subsection{Singular Value Decomposition}
 Our first observation about the code dealt with singular value decomposition. We have realized that it is computed many times while it has to be computed only once. We do exactly this. Compute result in the first iteration of the loop and store the result for future reference.
 
-
 \subsection{Parallelism}
-The second observation was that we could execute smoothing using multiple threads. 
+The second observation was that we could execute smoothing using multiple threads.
 We could not simply divide vertices into few sets and process them in parallel, because each element depends on multiple vertices.
 By operating on two nodes at the same time, and computing their elements' quality we may end up with data hazards.
 To divide nodes into independent sets we used graph coloring.
@@ -595,10 +594,10 @@ Graph coloring is a technique of assigning a 'color' (number) to each node in a 
 That guarantees that they are disconnected and independent.
 
 \subsection{Compiler}
-The third observations was that default configuration of the compiler does not guarantee maximum performance and does not utilize all optimizations available for our platform. 
+The third observations was that default configuration of the compiler does not guarantee maximum performance and does not utilize all optimizations available for our platform.
 We started with GCC 4.6 and a long set of flags crafted for our purpose.
-Later on we upgraded it to version 4.8 which allowed us to take advantage of a couple of new improvements.
-We also tried Clang 3.3 which was promising over twofold improvements, but we found its performance disappointing.
+Later on we upgraded it to version 4.8 which allowed us to take advantage of a couple of improvements.
+We also tried Clang 3.3 which was promising over twofold improvements, however, due to libstdc++ bugs and linking issues we did not manage to make it working.
 
 \section{Performance Improvements}
 
@@ -610,7 +609,7 @@ We also tried Clang 3.3 which was promising over twofold improvements, but we fo
   Rev 3 & Memoization of computations \\ \hline
   Rev 4 & Multi threading with 4 threads and GCC 4.6 \\ \hline
   Rev 5 & Multi threading with 8 threads and GCC 4.8 \\ \hline
-  Rev 6 & Final experiments \\ \hline
+  Rev 6 & Final version (with Link Time Optimizations) \\ \hline
 \end{tabular}
 
 %Low level optimizations
@@ -641,12 +640,12 @@ We also tried Clang 3.3 which was promising over twofold improvements, but we fo
 \vskip 1em
 
 \subsection{Memoization - SVD cache}
-During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple time the same values. To implement that we used a hash map with number of the node in the mesh being an index. 
+During data flow analysis we noticed that the metric property for a vertex is constant and therefore we can avoid calculating multiple time the same values. To implement that we used a hash map with number of the node in the mesh being an index.
 If the id exists in the map we return value stored in there, otherwise we solve the matrix and store the solution for future references.
-Our initial implementation used std::vector us an underlying data structure (from the very beginning we assumed that actual maps will not be fast enough). 
+Our initial implementation used std::vector us an underlying data structure (from the very beginning we assumed that actual maps will not be fast enough).
 As it turned out with tens of millions of iteration even std::iterator may not be fast enough.
 After tunning a benchmark and verifying its results with callgrind we have noted that 10\% of all CPU time is spent on incrementing iterators.
-From that point onwards we used arrays and integer based iterations whenever possible. 
+From that point onwards we used arrays and integer based iterations whenever possible.
 
 \vskip 1em
 \begin{tikzpicture}
@@ -675,22 +674,22 @@ From that point onwards we used arrays and integer based iterations whenever pos
 \vskip 1em
 
 \subsection{Graph Colouring}
-We started transformation from sequential smoothing to a multi-threaded execution by deciding on a graph coloring algorithm. 
-The number of colors used for our graph had a direct implications on performance. 
-With fewer colors we can achieve better performance by being able to execute more code and spending less time synchronizing. 
-We knew that the mesh is a planar graph and therefore can be colored with at most 4 colors. 
+We started transformation from sequential smoothing to a multi-threaded execution by deciding on a graph coloring algorithm.
+The number of colors used for our graph had a direct implications on performance.
+With fewer colors we can achieve better performance by being able to execute more code and spending less time synchronizing.
+We knew that the mesh is a planar graph and therefore can be colored with at most 4 colors.
 With more complicated algorithms the benefits of achieving coloring with fewer colors, may be outweighed by time required for development, debugging and executing the algorithm.
 After looking at various algorithms we have decided on a simple and greedy approach.
 
 \subsection{Multi threading}
 Knowing color for each node we can process nodes with the same color independently, potentially having a separate thread for each node.
-We started by launching thousands of threads, each operating on its own node. 
+We started by launching thousands of threads, each operating on its own node.
 After evaluating the performance we found out that the time improvement was unsatisfactory, and for the first time we have a performance regression.
-\footnote{We actually don't know how long it would take. 
-We did not have the patience to wait for it. 
-Let's say it takes infinitely long.} 
+\footnote{We actually don't know how long it would take.
+We did not have the patience to wait for it.
+Let's say it takes infinitely long.}
 We concluded that it was caused by too many threads competing for resources and by system scheduler constantly switching between them.
-As a result we have settled on using few threads, each processing it's own range of nodes. 
+As a result we have settled on using few threads, each processing it's own range of nodes.
 To avoid locking we made sure that threads do not share any data and can operate safely.
 The only place in the application where we wait for threads is before we start processing nodes with a different color.
 We have to make sure that all threads finished as it is possible that the current and the following batch of nodes share data.
@@ -758,13 +757,16 @@ We have to make sure that all threads finished as it is possible that the curren
 Apart from looking at how to make the application itself better we also looked at how to make it more compatible at architectural level. Once we finished modifying the code, we have decided to try a different compiler. Early on in the development and research process we stayed with what was avialable at our machine, i.e. gcc 4.6. We have tried many different options, however, most of them did not yield a running program. We have started with our research into LLVM. In the latest version this compiler introduced improved loop vectorizer. We had hoped, after looking at the code, that we could just make compiler vectorize them for us yeilding performance improvement. However, we soon realised that the code we had is not so simply vectorizable, or at least we had hard time to come up with a good way to do that. Furthermore compiling LLVM 3.3 from source has proven to be not an easy task. To be more precise, the actual compilation is quite trivial, problem is with obtaining compatible and bug free c++ standard library. Hence, we did not manage to have a working version of code compiled by this compiler. However, what we managed to present and is included in our results is newer version of gcc. It has been done mostly as a test to see whether compiler improvements give any performance improvement to our application. As it turns out specific compiler options cause more difference than changing compiler version by two minor numbers. It's quite encouraging to see that current level compilers are in a good state when it comes to performance optimizations no matter the version. However, it left us wondering what the compiler writers are focused on.
 
 \section{Conclusion}
-We achieved outstanding performance improvement, speeding up the application over eight times. 
+We achieved outstanding performance improvement, speeding up the application over eight times.
 
 What is most surprising is how much quality of the compiler and its configuration affects performance. By carefully choosing options and aiming with them for our architecture we were able to increase the performance threefold.
 
-Even tough we attempted to parallelize the application as much as possible, multi threading improved the performance only 2.5 times. Executing code in eight separate threads, each utilizing its core to around 100\% we expected to gain much more. We speculate that we could have achieved better cores utilization by dynamically dispatching smoothing jobs. Instead we settled on a simpler to develop and verify approach of running jobs in a previously generated order.
+Even tough we attempted to parallelize the application as much as possible, multi threading improved the performance only 2.5 times. Executing code in eight separate threads, each utilizing its core to around 100\% we expected to gain much more. We speculate that we could have achieved better core utilization by dynamically dispatching smoothing jobs. Instead we settled on a simpler to develop and verify approach of running jobs in a previously generated order.
 
 For the last revisions of the application we had to change size for mesh from small to medium. As the time of execution dropped below 1s performance evaluations became too volatile and not statistically significant.
+
+\subsection{Division of Work}
+We had split the work according to the aspects of the application it concerned. While Łukasz was working on making application faster in general, i.e. he implemented memoization and multithreading, Robert dealt with making the faster application utilise machine to full extent. He was making compiler adjustments, changing compiler and fine tuning code parameters as constness of variables, number of threads and simplifying operations performed by the application.
 
 \begin{tikzpicture}
   \begin{axis}[
@@ -839,7 +841,7 @@ One of the first hypothesis we rejected almost immediately was to work on cache 
   \addplot[fill=third] coordinates
     {(0,17.1739) (1, 17.2485) (2,17.2418) (3,17.2849) (4,17.2385) (5,17.2462) (6,17.2613) (7,17.2998) (8,17.2925) (9,17.2096)}
     \closedcycle;
-  \addlegendentry{Rev 3}  
+  \addlegendentry{Rev 3}
   \addplot[fill=fourth] coordinates
     {(0,8.3611) (1,8.38078) (2,8.38714) (3,8.24693) (4,8.46204) (5,8.29801) (6,8.30111) (7,8.43508) (8,8.36146) (9,9.5774)}
     \closedcycle;
@@ -869,7 +871,7 @@ Table of execution times used to evaluate performance of the application\\[10pt]
 3 & 1.02 &  1.03 &  1.03 &  1.13 &  1.01 &  1.02 &  1.08 &  1.00 &  1.03 &  1.04 &  1.04 &  678.07\% & 217.79\% \\ \hline
 5 & 0.90 &  0.90 &  0.86 &  1.00 &  0.91 &  0.86 &  0.86 &  0.91 &  0.90 &  0.87 &  0.90 &  785.00\% & 115.77\% \\ \hline
 \hline
-\multicolumn{14}{|c|}{medium mesh} \\ \hline                        
+\multicolumn{14}{|c|}{medium mesh} \\ \hline
 1 & 53.79 & 54.51 & 53.91 & 54.83 & 53.88 & 54.71 & 53.83 & 53.72 & 53.72 & 53.96 & 54.08 & 100.00\% & 100.00\% \\ \hline
 2 & 20.25 & 20.24 & 20.13 & 19.84 & 19.72 & 19.74 & 20.22 & 20.30 & 19.71 & 19.59 & 19.97 & 270.77\% & 270.77\% \\ \hline
 3 & 17.17 & 17.25 & 17.24 & 17.28 & 17.24 & 17.25 & 17.26 & 17.30 & 17.29 & 17.21 & 17.25 & 313.54\% & 115.80\% \\ \hline
@@ -901,9 +903,5 @@ Table of execution times used to evaluate performance of the application\\[10pt]
 % set second argument of \begin to the number of references
 % (used to reserve space for the reference number labels box)
 
-
-
 % that's all folks
 \end{document}
-
-
