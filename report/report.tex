@@ -416,18 +416,11 @@ Email: robert.kruszewski10@imperial.ac.uk}}
 
 
 \begin{abstract}
-%\boldmath
-The abstract goes here.
+Our task was to speed up given application us much possible. 
+During three weeks we worked on improving its performance by utilizing as much hardware power as possible and optimizing software. 
+We have achieved eightfold improvement adapting sequential code for multi threaded execution and using compiler to generate the fastest possible code for our architecture.
+We evaluated our progress by benchmarking the application multiple times on two sizes of the problem, after each major improvement.
 \end{abstract}
-% IEEEtran.cls defaults to using nonbold math in the Abstract.
-% This preserves the distinction between vectors and scalars. However,
-% if the conference you are submitting to favors bold math in the abstract,
-% then you can use LaTeX's standard command \boldmath at the very start
-% of the abstract to achieve this. Many IEEE journals/conferences frown on
-% math in the abstract anyway.
-
-% no keywords
-
 
 
 
@@ -548,7 +541,11 @@ The abstract goes here.
 
 \section{Hardware and Software Analysis}
 
-We have decided to use our lab machines as they are in abundance making testing easier. Also as they are modern and powerful we wanted to see how far can we go we current consumer grade products. We have begun our investigation by looking at limits of our hardware. With more than one core and abundance of main memory we had to test parallelization and caching in order to get maximal performance.
+We have decided to use our lab machines as they are in abundance making testing easier. 
+Also as they are modern and powerful we wanted to see how far can we go we current consumer grade products. 
+We have begun our investigation by looking at limits of our hardware. 
+With more than one core and abundance of main memory we had to test parallelization and caching in order to get maximal performance.
+We started by looking in details at the hardware, software and planning possible improvements.
 
 \subsection{Machine description}
 Our test machines have following specification:\\\\
@@ -565,12 +562,6 @@ With our experience in compiler writing we knew that they can make a huge differ
 
 \subsection{Parallelization}
 With four hyperthreaded cores we knew that in order to fully utilise the machine we would need to parallelize our algorithm. We have tried first four and then eight threads running our computation. We have decided to use C++ async library which allows for thread dispatch and creation as a language level construct.
-
-\section{Application Analysis}
-
-The next step after looking at the available hardware was to look at the software.
-We observed and noted behavior of the application, its bottlenecks and data flow.
-All that data insight allowed us to improve performance of the application in a systematic order.
 
 \subsection{Computations}
 We started analysis by looking at the equations and functions within the application. 
@@ -592,7 +583,7 @@ We used two main annotations - 'constant' and 'parallelize'.
 \section{Observations}
 
 \subsection{Singular Value Decomposition}
-Our first observation about the code dealt with singular value decomposition. We have realised that it is computed many times while it has to be computed only once. We do exactly this. Compute result in the first iteration of the loop and store the result for future reference
+Our first observation about the code dealt with singular value decomposition. We have realized that it is computed many times while it has to be computed only once. We do exactly this. Compute result in the first iteration of the loop and store the result for future reference.
 
 
 \subsection{Parallelism}
@@ -601,7 +592,7 @@ We could not simply divide vertices into few sets and process them in parallel, 
 By operating on two nodes at the same time, and computing their elements' quality we may end up with data hazards.
 To divide nodes into independent sets we used graph coloring.
 Graph coloring is a technique of assigning a 'color' (number) to each node in a graph such that no two adjacent nodes have the same color.
-That guarantees that they are not connected and are fully independent of each other.
+That guarantees that they are disconnected and independent.
 
 \subsection{Compiler}
 The third observations was that default configuration of the compiler does not guarantee maximum performance and does not utilize all optimizations available for our platform. 
