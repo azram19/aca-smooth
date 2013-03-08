@@ -96,24 +96,24 @@ void Mesh::create_adjacency(){
 }
 
 void Mesh::precompute_surfaceNodes() {
-  for(size_t it = 0; it < this->NNodes; it++) {
-    this->surfaceNode[it] = this->isSurfaceNode(it);
+  for(size_t it = 0; it < NNodes; it++) {
+    surfaceNode.push_back(NEList[it].size() < NNList[it].size());
   }
 }
 
 void Mesh::precompute_cornerNodes() {
-  for(size_t it = 0; it < this->NNodes; it++) {
-    this->cornerNode[it] = this->isCornerNode(it);
+  for(size_t it = 0; it < NNodes; it++) {
+    cornerNode.push_back(fabs(normals[2*it])==1.0 && fabs(normals[2*it+1]==1.0));
   }
 }
 
 bool Mesh::isSurfaceNode(size_t vid) const{
-  return this->surfaceNode[vid];
+  return surfaceNode[vid];
   //return NEList[vid].size() < NNList[vid].size();
 }
 
 bool Mesh::isCornerNode(size_t vid) const{
-  return this->cornerNode[vid];
+  return cornerNode[vid];
   //return fabs(normals[2*vid])==1.0 && fabs(normals[2*vid+1]==1.0);
 }
 
