@@ -72,6 +72,8 @@ Mesh::Mesh(const char *filename){
   create_adjacency();
   find_surface();
   set_orientation();
+  precompute_surfaceNodes();
+  precompute_cornerNodes();
 }
 
 void Mesh::create_adjacency(){
@@ -93,12 +95,26 @@ void Mesh::create_adjacency(){
   }
 }
 
+void Mesh::precompute_surfaceNodes() {
+  for(size_t it = 0; it < NNodes; it++) {
+    surfaceNode.push_back(NEList[it].size() < NNList[it].size());
+  }
+}
+
+void Mesh::precompute_cornerNodes() {
+  for(size_t it = 0; it < NNodes; it++) {
+    cornerNode.push_back(fabs(normals[2*it])==1.0 && fabs(normals[2*it+1]==1.0));
+  }
+}
+
 bool Mesh::isSurfaceNode(size_t vid) const{
-  return NEList[vid].size() < NNList[vid].size();
+  return surfaceNode[vid];
+  //return NEList[vid].size() < NNList[vid].size();
 }
 
 bool Mesh::isCornerNode(size_t vid) const{
-  return fabs(normals[2*vid])==1.0 && fabs(normals[2*vid+1]==1.0);
+  return cornerNode[vid];
+  //return fabs(normals[2*vid])==1.0 && fabs(normals[2*vid+1]==1.0);
 }
 
 void Mesh::find_surface(){
