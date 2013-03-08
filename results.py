@@ -63,6 +63,11 @@ def main():
 		{
 			"comment" : "Multithreading",
 			"hash" : "4832d252005ea59a25fd63522e5681fda059d161"
+		}, 
+		{
+			"comment" : "Better compiler, more optimazations".
+			"hash" : "298074ddda46988df2dd763e8ca580810616bf21"
+
 		}
 	]
 
