@@ -445,25 +445,25 @@ The abstract goes here.
 
 
 
-\section{Introduction}
-% no \IEEEPARstart
-This demo file is intended to serve as a ``starter file''
-for IEEE conference papers produced under \LaTeX\ using
-IEEEtran.cls version 1.7 and later.
-% You must have at least 2 lines in the paragraph with the drop letter
-% (should never be an issue)
-I wish you the best of success.
+% \section{Introduction}
+% % no \IEEEPARstart
+% This demo file is intended to serve as a ``starter file''
+% for IEEE conference papers produced under \LaTeX\ using
+% IEEEtran.cls version 1.7 and later.
+% % You must have at least 2 lines in the paragraph with the drop letter
+% % (should never be an issue)
+% I wish you the best of success.
 
-\hfill mds
+% \hfill mds
 
-\hfill January 11, 2007
+% \hfill January 11, 2007
 
-\subsection{Subsection Heading Here}
-Subsection text here.
+% \subsection{Subsection Heading Here}
+% Subsection text here.
 
 
-\subsubsection{Subsubsection Heading Here}
-Subsubsection text here.
+% \subsubsection{Subsubsection Heading Here}
+% Subsubsection text here.
 
 
 % An example of a floating figure using the graphicx package.
@@ -549,43 +549,32 @@ Subsubsection text here.
 % command of the stfloats package.
 
 \section{Hardware and Software Analysis}
-CPU
-Intel(R) Core(TM) i7-2600 CPU @ 3.40GHz
-cache: 8182 KB
-cores: 4/8
 
-RAM
-8GB
-
-OS
-Ubuntu 12.04
-
-Compiler
-GCC 4.6.2 and GCC 4.8.0
-
-Language
-C++11
-
-\subsection{Introduction}
-We started work on speeding up the application by looking at available hardware, and possible techniques which could be applied to achieve better performance.
+We have decided to use our lab machines as they are in abundance making testing easier. Also as they are modern and powerful we wanted to see how far can we go we current consumer grade products. We have begun our investigation by looking at limits of our hardware. With more than one core and abundance of main memory we had to test parallelization and caching in order to get maximal performance.
 
 \subsection{Machine description}
-We chose a 5 years old Toshiba laptop as our target device. It has a Intel Core 2 Due CPU with 2MB of cache and 2 cores, one tacked at 800 MHz, and another at 2.00 GHZ. There was 3GB of RAM memory. We were hoping to find a graphics card with CUDA support, but we were unlucky here.
+Our test machines have following specification:\\\\
+\emph{CPU} Intel(R) Core(TM) i7-2600 CPU @ 3.40GHz\\
+\emph{Cache} 8192 KB\\
+\emph{Cores} 4/8\\
+\emph{RAM} 8GB\\
+\emph{OS} Ubuntu 12.04\\
+\emph{Compiler} GCC 4.6.2 and GCC 4.8.0\\
+\emph{Language} C++11
 
 \subsection{Compiler flags}
-The first improvement that came to or mind was to optimize compiler's flags to target our platform. We expected it provide a huge gain considering that this micro architecture supports floating point vector operations and knowing that the code generation can significantly affect applications performance.
+With our experience in compiler writing we knew that they can make a huge difference. Even though the initial code used \"-O3\" flag, which is a very aggresive optimisation, we thought that there still must be a room for improvement. First of all we decided to tune compiler parameters for given architecutre. Having looked at the code and realising that mathematical operations are at the core of the algorithm we decided to turn on approximate math functions in order to gain performance improvements. Fortunately we did not spot regressions in quality of the results which could have prevented us from using this option.
 
 \subsection{Parallelization}
-With two separate cores the second obvious move was to fully utilize power of both of them. That required detecting areas of the applications that were independent and could be run in parallel.
-
+With four hyperthreaded cores we knew that in order to fully utilise the machine we would need to parallelize our algorithm. We have tried first four and then eight threads running our computation. We have decided to use C++ async library which allows for thread dispatch and creation as a language level construct.
 
 \section{Application Analysis}
-
+ 
 \subsection{Data Flow}
-The first step in analyzing the application's code base was to rearrange equations and extract small sections of them which are computed multiple time. After the code has been divided we looked as each expression and evaluated whether it's a constant or a variable. We needed to determine that to able to observe the data flow in the application, and to detect areas which could be parallelized or which were unnecessarily computed.
+The first step in analyzing the application's code base was to rearrange equations and extract small sections of them which are computed multiple times. After the code has been divided we looked at each expression and evaluated whether it's a constant or a variable. We needed to determine that to able to observe the data flow of the application, and to detect areas which could be parallelized or which were unnecessarily computed more than once. We have spotted multiple places where result could be precomputed once or set at the beginning of many of loop iterations.
 
-\subsection{SVD}
-The first significant observation was that SVDs are solved multiple time while the parameters which they depend on does not change between iterations. We used that fact to use technique called memoization which guarantees that we solve each SVD only once.
+\subsection{Singular Value Decomposition}
+Our first observation about the code dealt with singular value decomposition. We have realised that it is computed many times while it has to be computed only once. We do exactly this. Compute result in the first iteration of the loop and store the result for future reference
 
 \subsection{Possible Parallelism}
 The second observation was that we can use graph coloring to divide the mesh into a set of categories. Vertices in a category are not dependent on each other which allows us to smoothen them in parallel. At the beginning we started by having a light separate thread or each vertex, but after performance analysis we have settled down on few computationally heavy threads.
